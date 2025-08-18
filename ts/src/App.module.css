@@ -1,0 +1,18 @@
+.header {
+  background-color: var(--primary-color);
+  align-items: center;
+  display: inline-block;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  height: 10vh;
+
+  .headerTitle {
+    margin: 8px;
+  }
+
+  .icon {
+    font-size: 32px;
+    margin-right: 8px;
+  }
+}
