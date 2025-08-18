@@ -1,0 +1,1 @@
+from .endpoints import dividends_bp
