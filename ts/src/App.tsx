@@ -6,9 +6,7 @@ import {
   Typography,
   Row,
   Col,
-  Card,
   Divider,
-  Skeleton,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -19,6 +17,7 @@ import {
   useGetPreviousYearDividends,
   useGetTotalDividends,
 } from "./hooks/api.hooks";
+import InfoCard from "./components/info-card/info-card";
 
 function App() {
   const { data: totalDividends, isLoading: totalDividendsLoading } =
@@ -47,76 +46,59 @@ function App() {
         <Content style={{ padding: "0 48px" }}>
           <Row justify={"space-between"} gutter={24}>
             <Col span={6}>
-              <Card className={styles.card}>
-                <Skeleton loading={totalDividendsLoading} active>
-                  <Typography.Text type="secondary">
-                    Total Dividends
-                  </Typography.Text>
-                  <Typography.Title level={2} style={{ margin: 0 }}>
-                    £ {totalDividends}
-                  </Typography.Title>
-                </Skeleton>
-              </Card>
+              <InfoCard
+                title="Total Dividends"
+                value={`£ ${totalDividends?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+                loading={totalDividendsLoading}
+              />
             </Col>
             <Col span={6}>
-              <Card className={styles.card}>
-                <Skeleton loading={isLoadingPreviousYear} active>
-                  <Typography.Text type="secondary">
-                    Previous Year Avg. Monthly
-                  </Typography.Text>
-                  <Typography.Title level={2} style={{ margin: 0 }}>
-                    £{" "}
-                    {(previousYearData
-                      ? previousYearData / 12
-                      : 0
-                    ).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </Typography.Title>
-                </Skeleton>
-              </Card>
+              <InfoCard
+                title="Previous Year Avg. Monthly"
+                value={`£ ${(previousYearData
+                  ? previousYearData / 12
+                  : 0
+                ).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+                loading={isLoadingPreviousYear}
+              />
             </Col>
             <Col span={6}>
-              <Card className={styles.card}>
-                <Skeleton loading={accountCashLoading} active>
-                  <Typography.Text type="secondary">
-                    Portfolio Value
-                  </Typography.Text>
-                  <Typography.Title level={2} style={{ margin: 0 }}>
-                    £{" "}
-                    {accountCash?.account_value.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </Typography.Title>
-                </Skeleton>
-              </Card>
+              <InfoCard
+                title="Portfolio Value"
+                value={`£ ${accountCash?.account_value.toLocaleString(
+                  undefined,
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}`}
+                loading={accountCashLoading}
+              />
             </Col>
             <Col span={6}>
-              <Card className={styles.card}>
-                <Skeleton
-                  loading={accountCashLoading || totalDividendsLoading}
-                  active
-                >
-                  <Typography.Text type="secondary">Yield</Typography.Text>
-                  <Typography.Title level={2} style={{ margin: 0 }}>
-                    {accountCash && totalDividends
-                      ? (
-                          (totalDividends / accountCash.account_value) *
-                          100
-                        ).toFixed(2)
-                      : 0}
-                    %
-                  </Typography.Title>
-                </Skeleton>
-              </Card>
+              <InfoCard
+                title="Yield"
+                value={`${
+                  accountCash && totalDividends
+                    ? (
+                        (totalDividends / accountCash.account_value) *
+                        100
+                      ).toFixed(2)
+                    : 0
+                }
+                    %`}
+                loading={accountCashLoading || totalDividendsLoading}
+              />
             </Col>
           </Row>
         </Content>
-        <Footer style={{ textAlign: "center" }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
-        </Footer>
+        <Footer />
       </Layout>
     </ConfigProvider>
   );

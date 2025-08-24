@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AccountCashResponse } from "../models/models";
 
 export function useGetTotalDividends() {
-  const [data, setData] = useState<number | null>(null);
+  const [data, setData] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -21,7 +21,7 @@ export function useGetTotalDividends() {
       })
       .catch((err) => {
         setError(err);
-        setData(null);
+        setData(undefined);
       })
       .finally(() => setIsLoading(false));
   }, []);
