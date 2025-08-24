@@ -8,4 +8,6 @@ RETRIEVE_REPORT_URL = "https://live.trading212.com/api/v0/history/exports"
 
 RETRIEVE_OPEN_POSITIONS_URL = "https://live.trading212.com/api/v0/equity/portfolio"
 
+RETRIEVE_ACCOUNT_CASH_URL = "https://live.trading212.com/api/v0/equity/account/cash"
+
 REQUEST_HEADERS = {"Authorization": API_KEY}

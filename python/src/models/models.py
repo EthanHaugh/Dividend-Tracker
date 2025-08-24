@@ -9,7 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     func,
 )
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 
 Base = declarative_base()
 
@@ -91,4 +91,17 @@ class YearlyDividends(Base):
             "year": self.year,
             "total_dividends": self.total_dividends,
             "created_at": self.created_at,
+        }
+
+
+class AccountMetadata(Base):
+    __tablename__ = "account_metadata"
+
+    id = Column(Integer, primary_key=True)
+    account_value: Mapped[float] = mapped_column(Float, nullable=False)
+
+    def asdict(self):
+        return {
+            "id": self.id,
+            "account_value": self.account_value,
         }

@@ -16,3 +16,9 @@
     margin-right: 8px;
   }
 }
+
+.card {
+  min-height: 110px;
+  max-height: 110px;
+  overflow: hidden;
+}

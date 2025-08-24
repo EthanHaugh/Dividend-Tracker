@@ -8,20 +8,30 @@ import {
   Col,
   Card,
   Divider,
+  Skeleton,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
-import { useState } from "react";
 import styles from "./App.module.css";
 import "./styles/styles.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import {
+  useGetAccountCash,
+  useGetPreviousYearDividends,
+  useGetTotalDividends,
+} from "./hooks/api.hooks";
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { data: totalDividends, isLoading: totalDividendsLoading } =
+    useGetTotalDividends();
+  const { data: previousYearData, isLoading: isLoadingPreviousYear } =
+    useGetPreviousYearDividends();
+  const { data: accountCash, isLoading: accountCashLoading } =
+    useGetAccountCash();
 
   return (
     <ConfigProvider
       theme={{
-        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        algorithm: theme.darkAlgorithm,
       }}
     >
       <Layout>
@@ -37,23 +47,69 @@ function App() {
         <Content style={{ padding: "0 48px" }}>
           <Row justify={"space-between"} gutter={24}>
             <Col span={6}>
-              <Card>
-                <Card.Meta title="Stock A" description="Dividend: $2.00" />
+              <Card className={styles.card}>
+                <Skeleton loading={totalDividendsLoading} active>
+                  <Typography.Text type="secondary">
+                    Total Dividends
+                  </Typography.Text>
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    £ {totalDividends}
+                  </Typography.Title>
+                </Skeleton>
               </Card>
             </Col>
             <Col span={6}>
-              <Card>
-                <Card.Meta title="Stock B" description="Dividend: $1.50" />
+              <Card className={styles.card}>
+                <Skeleton loading={isLoadingPreviousYear} active>
+                  <Typography.Text type="secondary">
+                    Previous Year Avg. Monthly
+                  </Typography.Text>
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    £{" "}
+                    {(previousYearData
+                      ? previousYearData / 12
+                      : 0
+                    ).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Typography.Title>
+                </Skeleton>
               </Card>
             </Col>
             <Col span={6}>
-              <Card>
-                <Card.Meta title="Stock C" description="Dividend: $3.00" />
+              <Card className={styles.card}>
+                <Skeleton loading={accountCashLoading} active>
+                  <Typography.Text type="secondary">
+                    Portfolio Value
+                  </Typography.Text>
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    £{" "}
+                    {accountCash?.account_value.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Typography.Title>
+                </Skeleton>
               </Card>
             </Col>
             <Col span={6}>
-              <Card>
-                <Card.Meta title="Stock D" description="Dividend: $4.00" />
+              <Card className={styles.card}>
+                <Skeleton
+                  loading={accountCashLoading || totalDividendsLoading}
+                  active
+                >
+                  <Typography.Text type="secondary">Yield</Typography.Text>
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    {accountCash && totalDividends
+                      ? (
+                          (totalDividends / accountCash.account_value) *
+                          100
+                        ).toFixed(2)
+                      : 0}
+                    %
+                  </Typography.Title>
+                </Skeleton>
               </Card>
             </Col>
           </Row>

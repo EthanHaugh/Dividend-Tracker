@@ -1,11 +1,17 @@
 import csv
 import os
 from datetime import datetime
-from models.classes import DividendHistory
+from models.classes import AccountCashResponse, DividendHistory
 from sqlalchemy.exc import IntegrityError
 from db import Session
 
-from models.models import Company, Dividend, DividendReport, YearlyDividends
+from models.models import (
+    AccountMetadata,
+    Company,
+    Dividend,
+    DividendReport,
+    YearlyDividends,
+)
 
 
 def process_report(response_data: DividendHistory, year: int) -> None:
@@ -76,3 +82,15 @@ def process_company(response_data: dict) -> None:
         session.commit()
 
         # Carry out no clean up for no longer open positions for historical data
+
+
+def update_account(response_data: AccountCashResponse) -> None:
+    with Session() as session:
+        account_metadata = session.query(AccountMetadata).first()
+        if not account_metadata:
+            account_metadata = AccountMetadata(account_value=response_data.total)
+            session.add(account_metadata)
+        else:
+            account_metadata.account_value = response_data.total
+
+        session.commit()
