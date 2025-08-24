@@ -1,12 +1,7 @@
 from flask import Blueprint, jsonify
 from flask import request as flask_request
-import requests
 from sqlalchemy import func
 
-from consts.consts import (
-    REQUEST_HEADERS,
-    RETRIEVE_ACCOUNT_CASH_URL,
-)
 from db import Session
 from models.models import AccountMetadata, Company, YearlyDividends
 

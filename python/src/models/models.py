@@ -64,8 +64,8 @@ class DividendReport(Base):
     __tablename__ = "dividend_reports"
 
     report_id = Column(Integer, primary_key=True)
-    time_from = Column(DateTime, nullable=False)
-    time_to = Column(DateTime, nullable=False)
+    time_from = Column(Date, nullable=False)
+    time_to = Column(Date, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     def asdict(self):

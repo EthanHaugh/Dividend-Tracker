@@ -1,6 +1,8 @@
 import csv
 import os
 from datetime import datetime
+
+from sqlalchemy import extract, delete
 from models.classes import AccountCashResponse, DividendHistory
 from sqlalchemy.exc import IntegrityError
 from db import Session
@@ -16,6 +18,20 @@ from models.models import (
 
 def process_report(response_data: DividendHistory, year: int) -> None:
     with Session() as session:
+        # Look for existing report with specified year, if one exists delete it
+        # and update the table with up to date report
+        if report := (
+            session.query(DividendReport)
+            .filter(extract("year", DividendReport.time_from) == year)
+            .one_or_none()
+        ):
+            session.delete(report)
+            stmt = delete(Dividend).where(Dividend.year == year)
+            session.execute(stmt)
+            stmt = delete(YearlyDividends).where(YearlyDividends.year == year)
+            session.execute(stmt)
+            session.commit()
+
         try:
             session.add(
                 DividendReport(

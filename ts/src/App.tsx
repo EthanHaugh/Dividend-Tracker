@@ -85,9 +85,9 @@ function App() {
               <InfoCard
                 title="Yield"
                 value={`${
-                  accountCash && totalDividends
+                  accountCash && previousYearData
                     ? (
-                        (totalDividends / accountCash.account_value) *
+                        (previousYearData / accountCash.account_value) *
                         100
                       ).toFixed(2)
                     : 0
