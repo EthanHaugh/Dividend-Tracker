@@ -5,6 +5,12 @@ import {
   useGetPreviousYearDividends,
   useGetTotalDividends,
 } from "../../hooks/api.hooks";
+import {
+  AreaChartOutlined,
+  BankOutlined,
+  CalendarOutlined,
+  PercentageOutlined,
+} from "@ant-design/icons";
 
 export function HeaderCards() {
   const { data: totalDividends, isLoading: totalDividendsLoading } =
@@ -24,6 +30,7 @@ export function HeaderCards() {
             maximumFractionDigits: 2,
           })}`}
           loading={totalDividendsLoading}
+          suffix={<BankOutlined />}
         />
       </Col>
       <Col span={6}>
@@ -37,6 +44,7 @@ export function HeaderCards() {
             maximumFractionDigits: 2,
           })}`}
           loading={isLoadingPreviousYear}
+          suffix={<CalendarOutlined />}
         />
       </Col>
       <Col span={6}>
@@ -47,6 +55,15 @@ export function HeaderCards() {
             maximumFractionDigits: 2,
           })}`}
           loading={accountCashLoading}
+          footerTitle="Estimated Deposits"
+          footerValue={`£${accountCash?.estimated_deposits.toLocaleString(
+            undefined,
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}`}
+          suffix={<AreaChartOutlined />}
         />
       </Col>
       <Col span={6}>
@@ -62,14 +79,7 @@ export function HeaderCards() {
           }
                     %`}
           loading={accountCashLoading || totalDividendsLoading}
-          footerTitle="Estimated Deposits"
-          footerValue={`£${accountCash?.estimated_deposits.toLocaleString(
-            undefined,
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}`}
+          suffix={<PercentageOutlined />}
         />
       </Col>
     </Row>

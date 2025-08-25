@@ -6,4 +6,8 @@
   .footer {
     font-size: smaller;
   }
+
+  .icon {
+    font-size: 32px;
+  }
 }

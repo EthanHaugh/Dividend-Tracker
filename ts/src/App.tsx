@@ -11,6 +11,14 @@ function App() {
     <ConfigProvider
       theme={{
         algorithm: theme.darkAlgorithm,
+        components: {
+          Statistic: {
+            padding: 0,
+          },
+          Card: {
+            bodyPadding: 16,
+          },
+        },
       }}
     >
       <Layout>

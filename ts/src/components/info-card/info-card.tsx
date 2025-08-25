@@ -1,5 +1,7 @@
-import { Card, Skeleton, Typography } from "antd";
+import { Card, Col, Row, Skeleton, Typography } from "antd";
 import styles from "./info-card.module.css";
+import Statistic from "antd/es/statistic/Statistic";
+import { ReactElement } from "react";
 
 interface InfoCardProps {
   title: string;
@@ -7,6 +9,7 @@ interface InfoCardProps {
   value?: string | number;
   footerTitle?: string;
   footerValue?: string | number;
+  suffix?: ReactElement;
 }
 
 export function InfoCard({
@@ -15,19 +18,26 @@ export function InfoCard({
   loading,
   footerTitle,
   footerValue,
+  suffix,
 }: InfoCardProps) {
   return (
     <Card className={styles.card}>
-      <Skeleton loading={loading} active>
-        <Typography.Text type="secondary">{title}</Typography.Text>
-        <Typography.Title level={2} style={{ margin: 0 }}>
-          {value}
-        </Typography.Title>
-        {footerTitle && (
-          <Typography.Text type="secondary" className={styles.footer}>
-            {footerTitle}: {footerValue}
-          </Typography.Text>
-        )}
+      <Skeleton active loading={loading} paragraph={false}>
+        <Row align="middle" justify="space-between">
+          <Col span={20}>
+            <Statistic
+              title={title}
+              value={value}
+              className={styles.statistic}
+            />
+            <Typography.Text type="secondary" className={styles.footer}>
+              {footerTitle ? `${footerTitle}: ${footerValue}` : <>&nbsp;</>}
+            </Typography.Text>
+          </Col>
+          <Col span={4}>
+            <div className={styles.icon}>{suffix}</div>
+          </Col>
+        </Row>
       </Skeleton>
     </Card>
   );
