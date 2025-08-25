@@ -2,7 +2,7 @@ import csv
 import os
 from datetime import datetime
 
-from sqlalchemy import extract, delete
+from sqlalchemy import extract, delete, func
 from models.classes import AccountCashResponse, DividendHistory
 from sqlalchemy.exc import IntegrityError
 from db import Session
@@ -102,9 +102,20 @@ def process_company(response_data: dict) -> None:
 
 def update_account(response_data: AccountCashResponse) -> None:
     with Session() as session:
+        total_dividends: float = float(
+            session.query(func.sum(YearlyDividends.total_dividends)).scalar()
+        )
         account_metadata = session.query(AccountMetadata).first()
         if not account_metadata:
-            account_metadata = AccountMetadata(account_value=response_data.total)
+            estimated_deposits = (
+                response_data.total
+                - response_data.ppl
+                - response_data.result
+                - total_dividends
+            )
+            account_metadata = AccountMetadata(
+                account_value=response_data.total, estimated_deposits=estimated_deposits
+            )
             session.add(account_metadata)
         else:
             account_metadata.account_value = response_data.total

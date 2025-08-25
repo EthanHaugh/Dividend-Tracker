@@ -99,9 +99,11 @@ class AccountMetadata(Base):
 
     id = Column(Integer, primary_key=True)
     account_value: Mapped[float] = mapped_column(Float, nullable=False)
+    estimated_deposits: Mapped[float] = mapped_column(Float, nullable=False)
 
     def asdict(self):
         return {
             "id": self.id,
             "account_value": self.account_value,
+            "estimated_deposits": self.estimated_deposits,
         }

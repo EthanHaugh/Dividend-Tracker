@@ -84,16 +84,24 @@ function App() {
             <Col span={6}>
               <InfoCard
                 title="Yield"
-                value={`${
+                value={`~${
                   accountCash && previousYearData
                     ? (
-                        (previousYearData / accountCash.account_value) *
+                        (previousYearData / accountCash.estimated_deposits) *
                         100
                       ).toFixed(2)
                     : 0
                 }
                     %`}
                 loading={accountCashLoading || totalDividendsLoading}
+                footerTitle="Estimated Deposits"
+                footerValue={`£${accountCash?.estimated_deposits.toLocaleString(
+                  undefined,
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}`}
               />
             </Col>
           </Row>
