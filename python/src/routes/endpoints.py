@@ -3,7 +3,7 @@ from flask import request as flask_request
 from sqlalchemy import func
 
 from db import Session
-from models.models import AccountMetadata, Company, YearlyDividends
+from models.models import AccountMetadata, Company, Dividend, YearlyDividends
 
 dividends_bp = Blueprint("dividends", __name__)
 
@@ -41,7 +41,6 @@ def get_total_dividends():
         return jsonify({"total_dividends": float(total)}), 200
 
 
-# TODO: This information needs stored in the DB and queried to avoid hitting T212 API rate limits
 @dividends_bp.route("/account-cash", methods=["GET"])
 def get_account_cash():
     with Session() as session:
@@ -49,3 +48,20 @@ def get_account_cash():
         if not account_metadata:
             return jsonify({"error": "No account metadata found"}), 404
         return jsonify(account_metadata.asdict()), 200
+
+
+@dividends_bp.route("/pie-chart", methods=["GET"])
+def get_pie_chart_data():
+    with Session() as session:
+        query = (
+            session.query(
+                Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
+            )
+            .group_by(Dividend.ticker)
+            .order_by(func.sum(Dividend.total_payment).desc())
+            .all()
+        )
+        return (
+            jsonify({"data": [d._asdict() for d in query]}),
+            200,
+        )

@@ -1,10 +1,19 @@
 import { LineChartOutlined } from "@ant-design/icons";
-import { theme, Layout, ConfigProvider, Typography, Row, Divider } from "antd";
+import {
+  theme,
+  Layout,
+  ConfigProvider,
+  Typography,
+  Row,
+  Divider,
+  Col,
+} from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
 import "./styles/styles.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import HeaderCards from "./components/header-cards/header-cards";
+import DonutChart from "./components/pie-chart/pie-chart";
 
 function App() {
   return (
@@ -33,6 +42,12 @@ function App() {
         </Header>
         <Content style={{ padding: "0 48px" }}>
           <HeaderCards />
+          <Row className={styles.chartRow}>
+            <Col span={12} className={styles.chartCol}>
+              <DonutChart />
+            </Col>
+            <Col span={12}></Col>
+          </Row>
         </Content>
         <Footer />
       </Layout>

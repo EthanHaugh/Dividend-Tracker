@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AccountCashResponse } from "../models/models";
+import { AccountCashResponse, PieChartResponse } from "../models/models";
 import { BASE_URL } from "./consts";
 
 export function useGetTotalDividends() {
@@ -67,6 +67,34 @@ export function useGetAccountCash() {
   useEffect(() => {
     setIsLoading(true);
     fetch(`${BASE_URL}/account-cash`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        setData(result);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+        setData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return { data, isLoading, error };
+}
+
+export function useGetPieChartData() {
+  const [data, setData] = useState<PieChartResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`${BASE_URL}/pie-chart`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

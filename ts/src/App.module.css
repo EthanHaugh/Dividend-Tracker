@@ -16,3 +16,13 @@
     margin-right: 8px;
   }
 }
+
+.chartRow {
+  margin-top: 32px;
+
+  .chartCol {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
