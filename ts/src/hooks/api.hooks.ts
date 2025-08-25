@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AccountCashResponse } from "../models/models";
+import { BASE_URL } from "./consts";
 
 export function useGetTotalDividends() {
   const [data, setData] = useState<number | undefined>(undefined);
@@ -8,7 +9,7 @@ export function useGetTotalDividends() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch("http://localhost:5000/total-dividends")
+    fetch(`${BASE_URL}/total-dividends`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -37,7 +38,7 @@ export function useGetPreviousYearDividends() {
   useEffect(() => {
     const year = new Date().getFullYear() - 1;
     setIsLoading(true);
-    fetch(`http://localhost:5000/yearly-dividends?year=${year}`)
+    fetch(`${BASE_URL}/yearly-dividends?year=${year}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -65,7 +66,7 @@ export function useGetAccountCash() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch("http://localhost:5000/account-cash")
+    fetch(`${BASE_URL}/account-cash`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
