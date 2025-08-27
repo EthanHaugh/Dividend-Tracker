@@ -19,15 +19,8 @@ export interface ListDividendsResponse {
 }
 
 export interface DividendPayment {
-  created_at: string;
-  currency: string;
-  dividend_id: number;
-  payment_date: string;
-  number_of_shares: number;
-  report_id: number;
   ticker: string;
   total_payment: number;
-  year: number;
 }
 
 export interface YearlyDividendsResponse {
@@ -35,4 +28,23 @@ export interface YearlyDividendsResponse {
   created_at: string;
   id: number;
   total_dividends: string;
+}
+
+export interface ListCompanyDividendsResponse {
+  data: Dividend[];
+  page: number;
+  total_count: number;
+  page_size: number;
+}
+
+export interface Dividend {
+  created_at: string;
+  dividend_id: number;
+  number_of_shares: number;
+  report_id: string;
+  year: number;
+  ticker: string;
+  payment_date: string;
+  amount: number;
+  currency: string;
 }

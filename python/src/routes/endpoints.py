@@ -52,6 +52,7 @@ def get_account_cash():
 
 @dividends_bp.route("/pie-chart", methods=["GET"])
 def get_pie_chart_data():
+    """List total dividends by company for the pie chart."""
     with Session() as session:
         query = (
             session.query(
@@ -67,17 +68,63 @@ def get_pie_chart_data():
         )
 
 
-# Refactor this to group by ticker and total payment
-@dividends_bp.route("/list-dividends", methods=["GET"])
-def list_dividends():
+@dividends_bp.route("/list-company-totals", methods=["GET"])
+def list_company_totals():
+    """List total dividends for all companies with pagination"""
     with Session() as session:
         page = flask_request.args.get("page", default=1, type=int)
         page_size = flask_request.args.get("page_size", default=10, type=int)
+        search = flask_request.args.get("search", default=None, type=str)
 
         offset = (page - 1) * page_size
 
-        query = session.query(Dividend).order_by(Dividend.payment_date.desc())
+        query = (
+            session.query(
+                Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
+            )
+            .group_by(Dividend.ticker)
+            .order_by(func.sum(Dividend.total_payment).desc())
+        )
+        total_count = query.count()
 
+        if search:
+            query = query.filter(Dividend.ticker.ilike(f"%{search}%"))
+
+        query = query.offset(offset).limit(page_size)
+        return (
+            jsonify(
+                {
+                    "data": [d._asdict() for d in query],
+                    "page": page,
+                    "page_size": page_size,
+                    "total_count": total_count,
+                }
+            ),
+            200,
+        )
+
+
+@dividends_bp.route("/list-company-dividends", methods=["GET"])
+def list_company_dividends():
+    """List dividends for a specific company."""
+    with Session() as session:
+        page = flask_request.args.get("page", default=1, type=int)
+        page_size = flask_request.args.get("page_size", default=10, type=int)
+        ticker = flask_request.args.get("ticker", default=None, type=str)
+
+        if not ticker:
+            return (
+                jsonify({"error": "Query string parameter, ticker, is required"}),
+                400,
+            )
+
+        offset = (page - 1) * page_size
+
+        query = (
+            session.query(Dividend)
+            .filter(Dividend.ticker == ticker)
+            .order_by(Dividend.payment_date.desc())
+        )
         total_count = query.count()
 
         query = query.offset(offset).limit(page_size)

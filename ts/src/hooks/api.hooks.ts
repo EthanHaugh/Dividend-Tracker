@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   AccountCashResponse,
+  ListCompanyDividendsResponse,
   ListDividendsResponse,
   PieChartResponse,
   YearlyDividendsResponse,
@@ -148,14 +149,20 @@ export function useGetPieChartData() {
   return { data, isLoading, error };
 }
 
-export function useListDividendPayments(page: number, pageSize: number) {
+export function useListCompanyTotals(
+  page: number,
+  pageSize: number,
+  search: string
+) {
   const [data, setData] = useState<ListDividendsResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
-    fetch(`${BASE_URL}/list-dividends?page=${page}&page_size=${pageSize}`)
+    fetch(
+      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}`
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -171,7 +178,41 @@ export function useListDividendPayments(page: number, pageSize: number) {
         setData(null);
       })
       .finally(() => setIsLoading(false));
-  }, [page, pageSize]);
+  }, [page, pageSize, search]);
+
+  return { data, isLoading, error };
+}
+
+export function useListCompanyDividends(
+  page: number,
+  pageSize: number,
+  ticker: string
+) {
+  const [data, setData] = useState<ListCompanyDividendsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(
+      `${BASE_URL}/list-company-dividends?page=${page}&page_size=${pageSize}&ticker=${ticker}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        setData(result);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+        setData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, [page, pageSize, ticker]);
 
   return { data, isLoading, error };
 }

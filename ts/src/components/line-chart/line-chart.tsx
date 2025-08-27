@@ -7,6 +7,7 @@ import {
   Tooltip,
   Legend,
   Title,
+  TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useGetYearlyDividends } from "../../hooks/api.hooks";
@@ -54,6 +55,15 @@ const DividendsLineChart = () => {
       },
       legend: {
         display: false,
+      },
+      tooltip: {
+        displayColors: false,
+        callbacks: {
+          label: function (context: TooltipItem<"line">) {
+            const value = context.parsed.y;
+            return `£ ${value.toFixed(2)}`;
+          },
+        },
       },
     },
     scales: {

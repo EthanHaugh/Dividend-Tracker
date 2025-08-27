@@ -35,7 +35,7 @@ export function HeaderCards() {
       </Col>
       <Col span={6}>
         <InfoCard
-          title="Previous Year Avg. Monthly"
+          title="Prev. Year Avg. Monthly"
           value={`£ ${(previousYearData
             ? previousYearData / 12
             : 0
