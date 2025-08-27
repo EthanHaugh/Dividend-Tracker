@@ -1,7 +1,7 @@
 freeze:
 	pip freeze > requirements.txt
 
-dev:
+py-deps:
 	pip install -r requirements.txt
 
 run-web:
@@ -9,3 +9,6 @@ run-web:
 
 run-fe:
 	cd ./ts/ && npm run start
+
+ts-deps:
+	cd ./ts/ && npm install
