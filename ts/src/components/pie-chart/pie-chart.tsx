@@ -1,4 +1,3 @@
-import React from "react";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Title } from "chart.js";
 import { useGetPieChartData } from "../../hooks/api.hooks";
@@ -19,12 +18,12 @@ export function DonutChart() {
       {
         data: values,
         backgroundColor: [
-          "#1f77b4", // deep blue
-          "#ff7f0e", // vivid orange
-          "#2ca02c", // strong green
-          "#d62728", // bold red
+          "#e60000", // vivid red
+          "#ff1a1a", // bright red with a hint of pink
+          "#990000", // strong deep red
+          "#4d0000", // darkest red, close to black but still visibly red
         ],
-        hoverOffset: 10,
+        hoverOffset: 20,
       },
     ],
   };

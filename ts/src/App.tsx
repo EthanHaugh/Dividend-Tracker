@@ -14,6 +14,7 @@ import "./styles/styles.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import HeaderCards from "./components/header-cards/header-cards";
 import DonutChart from "./components/pie-chart/pie-chart";
+import { DividendsTable } from "./components/dividends-table/dividends-table";
 
 function App() {
   return (
@@ -46,7 +47,9 @@ function App() {
             <Col span={12} className={styles.chartCol}>
               <DonutChart />
             </Col>
-            <Col span={12}></Col>
+            <Col span={12} className={styles.chartCol}>
+              <DividendsTable />
+            </Col>
           </Row>
         </Content>
         <Footer />

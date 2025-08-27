@@ -65,3 +65,30 @@ def get_pie_chart_data():
             jsonify({"data": [d._asdict() for d in query]}),
             200,
         )
+
+
+# Refactor this to group by ticker and total payment
+@dividends_bp.route("/list-dividends", methods=["GET"])
+def list_dividends():
+    with Session() as session:
+        page = flask_request.args.get("page", default=1, type=int)
+        page_size = flask_request.args.get("page_size", default=10, type=int)
+
+        offset = (page - 1) * page_size
+
+        query = session.query(Dividend).order_by(Dividend.payment_date.desc())
+
+        total_count = query.count()
+
+        query = query.offset(offset).limit(page_size)
+        return (
+            jsonify(
+                {
+                    "data": [d.asdict() for d in query],
+                    "page": page,
+                    "page_size": page_size,
+                    "total_count": total_count,
+                }
+            ),
+            200,
+        )

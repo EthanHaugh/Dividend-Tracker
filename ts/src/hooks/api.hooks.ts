@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { AccountCashResponse, PieChartResponse } from "../models/models";
+import {
+  AccountCashResponse,
+  ListDividendsResponse,
+  PieChartResponse,
+} from "../models/models";
 import { BASE_URL } from "./consts";
 
 export function useGetTotalDividends() {
@@ -111,6 +115,34 @@ export function useGetPieChartData() {
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  return { data, isLoading, error };
+}
+
+export function useListDividendPayments(page: number, pageSize: number) {
+  const [data, setData] = useState<ListDividendsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`${BASE_URL}/list-dividends?page=${page}&page_size=${pageSize}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        setData(result);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+        setData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, [page, pageSize]);
 
   return { data, isLoading, error };
 }
