@@ -29,3 +29,10 @@ export interface DividendPayment {
   total_payment: number;
   year: number;
 }
+
+export interface YearlyDividendsResponse {
+  year: number;
+  created_at: string;
+  id: number;
+  total_dividends: string;
+}

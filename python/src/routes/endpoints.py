@@ -18,7 +18,7 @@ def get_open_positions():
 @dividends_bp.route("/yearly-dividends", methods=["GET"])
 def get_yearly_dividends():
     with Session() as session:
-        query = session.query(YearlyDividends).order_by(YearlyDividends.year.desc())
+        query = session.query(YearlyDividends).order_by(YearlyDividends.year.asc())
 
         year_str = flask_request.args.get("year")
         year = int(year_str) if year_str else None

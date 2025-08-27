@@ -3,6 +3,7 @@ import {
   AccountCashResponse,
   ListDividendsResponse,
   PieChartResponse,
+  YearlyDividendsResponse,
 } from "../models/models";
 import { BASE_URL } from "./consts";
 
@@ -56,6 +57,34 @@ export function useGetPreviousYearDividends() {
       .catch((err) => {
         setError(err);
         setData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return { data, isLoading, error };
+}
+
+export function useGetYearlyDividends() {
+  const [data, setData] = useState<YearlyDividendsResponse[] | null>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`${BASE_URL}/yearly-dividends`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        setData(result);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+        setData([]);
       })
       .finally(() => setIsLoading(false));
   }, []);

@@ -7,6 +7,7 @@ import {
   Row,
   Divider,
   Col,
+  Space,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -15,6 +16,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import HeaderCards from "./components/header-cards/header-cards";
 import DonutChart from "./components/pie-chart/pie-chart";
 import { DividendsTable } from "./components/dividends-table/dividends-table";
+import LineChart from "./components/line-chart/line-chart";
 
 function App() {
   return (
@@ -41,15 +43,19 @@ function App() {
           </Row>
           <Divider />
         </Header>
-        <Content style={{ padding: "0 48px" }}>
+        <Content className={styles.content}>
           <HeaderCards />
           <Row className={styles.chartRow}>
             <Col span={12} className={styles.chartCol}>
               <DonutChart />
             </Col>
             <Col span={12} className={styles.chartCol}>
-              <DividendsTable />
+              <LineChart />
             </Col>
+          </Row>
+          <Space direction="vertical" />
+          <Row>
+            <DividendsTable />
           </Row>
         </Content>
         <Footer />
