@@ -8,6 +8,7 @@ import {
   Divider,
   Col,
   Space,
+  Button,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -17,8 +18,16 @@ import HeaderCards from "./components/header-cards/header-cards";
 import DonutChart from "./components/pie-chart/pie-chart";
 import { DividendsTable } from "./components/dividends-table/dividends-table";
 import LineChart from "./components/line-chart/line-chart";
+import { useUpdateCurrentYearDividends } from "./hooks/api.hooks";
 
 function App() {
+  const { mutate: updateDividends, isLoading: isUpdating } =
+    useUpdateCurrentYearDividends();
+
+  const handleRefresh = () => {
+    // call the mutate function returned by the hook
+    updateDividends();
+  };
   return (
     <ConfigProvider
       theme={{
@@ -35,13 +44,24 @@ function App() {
     >
       <Layout>
         <Header className={styles.header}>
-          <Row className={styles.headerTitle}>
-            <LineChartOutlined className={styles.icon} />
-            <Typography.Title level={3} style={{ margin: 0 }}>
-              Dividend Tracker
-            </Typography.Title>
+          <Row
+            className={styles.headerTitle}
+            justify="space-between"
+            align="middle"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <LineChartOutlined className={styles.icon} />
+              <Typography.Title level={3} style={{ margin: 0 }}>
+                Dividend Tracker
+              </Typography.Title>
+            </div>
+            <span>
+              <Button type="text" onClick={handleRefresh} loading={isUpdating}>
+                Refresh
+              </Button>
+            </span>
           </Row>
-          <Divider />
+          <Divider className={styles.divider} />
         </Header>
         <Content className={styles.content}>
           <HeaderCards />

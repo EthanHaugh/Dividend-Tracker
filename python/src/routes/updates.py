@@ -56,7 +56,7 @@ def get_dividend_history():
 
     # Allow Trading 212 to process the request
     # Can't use a loop here to continue pinging T212 due to rate limiting
-    time.sleep(10)
+    time.sleep(15)
 
     # Download report from Trading 212 using above response ID
     response = requests.get(RETRIEVE_REPORT_URL, headers=REQUEST_HEADERS)

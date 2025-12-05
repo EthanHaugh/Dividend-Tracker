@@ -15,6 +15,10 @@
     font-size: 32px;
     margin-right: 8px;
   }
+
+  .divider {
+    margin: 0px !important;
+  }
 }
 .content {
   padding: 0px 100px;
