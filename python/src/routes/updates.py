@@ -1,13 +1,9 @@
-import base64
 import time
-from urllib import request
 from flask import Blueprint, current_app, jsonify
 from flask import request as flask_request
 import requests
 
 from consts.consts import (
-    API_KEY,
-    API_KEY_SECRET,
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
     RETRIEVE_ACCOUNT_CASH_URL,
@@ -39,10 +35,6 @@ def get_dividend_history():
 
     if assert_report_with_date_does_not_exist(year):
         return jsonify({"error": "Report for the specified year already exists"}), 400
-    
-    credentials_string = f"{API_KEY}:{API_KEY_SECRET}"
-    encoded_credentials = base64.b64encode(credentials_string.encode('utf-8')).decode('utf-8')
-    auth_header = f"Basic {encoded_credentials}"
 
     payload = {
         "dataIncluded": {
@@ -54,7 +46,7 @@ def get_dividend_history():
         "timeFrom": f"{year}-01-01T00:00:00Z",
         "timeTo": f"{end_of_or_today(year)}T00:00:00Z",
     }
-    response = requests.post(GENERATE_REPORT_URL, headers={"Authorization": auth_header}, json=payload)
+    response = requests.post(GENERATE_REPORT_URL, headers=REQUEST_HEADERS, json=payload)
 
     if response.status_code != 200:
         return jsonify({"downloadError": response.json()}), response.status_code
@@ -66,7 +58,7 @@ def get_dividend_history():
     time.sleep(15)
 
     # Download report from Trading 212 using above response ID
-    response = requests.get(RETRIEVE_REPORT_URL, headers={"Authorization": auth_header})
+    response = requests.get(RETRIEVE_REPORT_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         return jsonify({"error": response.json()}), response.status_code
 
@@ -125,11 +117,7 @@ def update_report():
 def update_open_positions():
     """Fetch and update open positions in the database"""
 
-    credentials_string = f"{API_KEY}:{API_KEY_SECRET}"
-    encoded_credentials = base64.b64encode(credentials_string.encode('utf-8')).decode('utf-8')
-    auth_header = f"Basic {encoded_credentials}"
-
-    response = requests.get(RETRIEVE_OPEN_POSITIONS_URL, headers={"Authorization": auth_header})
+    response = requests.get(RETRIEVE_OPEN_POSITIONS_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         return jsonify({"error": response.json()}), response.status_code
 
@@ -141,11 +129,7 @@ def update_open_positions():
 # TODO: This information needs stored in the DB and queried to avoid hitting T212 API rate limits
 @updates_bp.route("/update-account-cash", methods=["GET"])
 def get_account_cash():
-    credentials_string = f"{API_KEY}:{API_KEY_SECRET}"
-    encoded_credentials = base64.b64encode(credentials_string.encode('utf-8')).decode('utf-8')
-    auth_header = f"Basic {encoded_credentials}"
-
-    response = requests.get(RETRIEVE_ACCOUNT_CASH_URL, headers={"Authorization": auth_header})
+    response = requests.get(RETRIEVE_ACCOUNT_CASH_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         return jsonify({"error": response.json()}), response.status_code
 
