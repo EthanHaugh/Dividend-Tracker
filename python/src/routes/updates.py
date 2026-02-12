@@ -1,5 +1,4 @@
 import time
-from urllib import request, response
 from flask import Blueprint, current_app, jsonify
 from flask import request as flask_request
 import requests
@@ -70,7 +69,14 @@ def get_dividend_history():
                 timeFrom=item["timeFrom"],
                 timeTo=item["timeTo"],
             )
-            request.urlretrieve(item["downloadLink"], "downloaded.csv")
+            # request.urlretrieve(item["downloadLink"], "downloaded.csv")
+            r = requests.get(item["downloadLink"], stream=True)
+            r.raise_for_status()
+            with open("downloaded.csv", "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
             current_app.extensions["executor"].submit(
                 process_report(dividend_history, year)
             )
