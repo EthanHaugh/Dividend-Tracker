@@ -44,7 +44,6 @@ export function DividendsTable() {
       </Row>
       <Row>
         <Table
-          className={styles.table}
           dataSource={data?.data}
           columns={columns}
           rowKey={(row) => row.ticker}
@@ -64,6 +63,7 @@ export function DividendsTable() {
               <DividendsTableRowExpand ticker={record.ticker} />
             ),
           }}
+          className={styles.table}
         />
       </Row>
     </>

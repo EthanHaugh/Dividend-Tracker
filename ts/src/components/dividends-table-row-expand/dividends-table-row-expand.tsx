@@ -12,7 +12,7 @@ export function DividendsTableRowExpand({
   ticker,
 }: DividendsTableRowExpandProps) {
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(5);
   const { data, isLoading } = useListCompanyDividends(page, pageSize, ticker);
 
   const columns: ColumnsType<Dividend> = [
@@ -44,10 +44,11 @@ export function DividendsTableRowExpand({
     <Table
       dataSource={data?.data}
       loading={isLoading}
-      rowKey="id"
+      rowKey={(row) => row.dividend_id}
       pagination={{
         current: page,
         pageSize,
+        total: data?.total_count,
         onChange: (page, pageSize) => {
           setPage(page);
           setPageSize(pageSize);
