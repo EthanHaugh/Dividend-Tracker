@@ -47,7 +47,7 @@ def process_report(response_data: DividendHistory, year: int) -> None:
 
         with open("downloaded.csv", "r") as file:
             reader = csv.DictReader(file)
-            total_count = 0
+            total_count: float = 0.0
             for row in reader:
                 total_count += float(row["Total"])
                 session.add(
@@ -77,7 +77,7 @@ def process_company(response_data: dict) -> None:
     with Session() as session:
         for company in response_data:
             # Check for existing company and update
-            existing_company: Company = (
+            existing_company: Company | None = (
                 session.query(Company).filter_by(ticker=company["ticker"]).one_or_none()
             )
             if existing_company:

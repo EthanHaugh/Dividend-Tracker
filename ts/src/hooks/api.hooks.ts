@@ -179,7 +179,7 @@ export function useGetPieChartData() {
 export function useListCompanyTotals(
   page: number,
   pageSize: number,
-  search: string
+  search: string,
 ) {
   const invalidateToken = useInvalidationToken();
   const [data, setData] = useState<ListDividendsResponse | null>(null);
@@ -189,7 +189,7 @@ export function useListCompanyTotals(
   useEffect(() => {
     setIsLoading(true);
     fetch(
-      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}`
+      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}`,
     )
       .then((response) => {
         if (!response.ok) {
@@ -214,7 +214,7 @@ export function useListCompanyTotals(
 export function useListCompanyDividends(
   page: number,
   pageSize: number,
-  ticker: string
+  ticker: string,
 ) {
   const invalidateToken = useInvalidationToken();
   const [data, setData] = useState<ListCompanyDividendsResponse | null>(null);
@@ -224,7 +224,7 @@ export function useListCompanyDividends(
   useEffect(() => {
     setIsLoading(true);
     fetch(
-      `${BASE_URL}/list-company-dividends?page=${page}&page_size=${pageSize}&ticker=${ticker}`
+      `${BASE_URL}/list-company-dividends?page=${page}&page_size=${pageSize}&ticker=${ticker}`,
     )
       .then((response) => {
         if (!response.ok) {
@@ -252,12 +252,14 @@ export function useUpdateCurrentYearDividends() {
   const [error, setError] = useState<Error | null>(null);
 
   // Expose a mutate function so callers can trigger the download on demand.
-  const mutate = async (): Promise<ListCompanyDividendsResponse | null> => {
+  const mutate = async (
+    year?: number,
+  ): Promise<ListCompanyDividendsResponse | null> => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(
-        `${BASE_URL}/download?year=${new Date().getFullYear()}`
+        `${BASE_URL}/download?year=${year || new Date().getFullYear()}`,
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

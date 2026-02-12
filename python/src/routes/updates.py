@@ -1,5 +1,5 @@
 import time
-from urllib import request
+from urllib import request, response
 from flask import Blueprint, current_app, jsonify
 from flask import request as flask_request
 import requests
@@ -15,7 +15,7 @@ from executors.executors import process_company, process_report, update_account
 from models.classes import AccountCashResponse, DividendHistory
 from db import Session
 from models.models import DividendReport
-from utils.endpoint_utils import assert_report_with_date_does_not_exist, end_of_or_today
+from utils.endpoint_utils import end_of_or_today
 
 updates_bp = Blueprint("service_updates", __name__)
 
@@ -33,9 +33,6 @@ def get_dividend_history():
             jsonify({"error": "Missing required Query String parameter: 'year'"}),
             400,
         )
-
-    if assert_report_with_date_does_not_exist(year):
-        return jsonify({"error": "Report for the specified year already exists"}), 400
 
     payload = {
         "dataIncluded": {
@@ -56,11 +53,12 @@ def get_dividend_history():
 
     # Allow Trading 212 to process the request
     # Can't use a loop here to continue pinging T212 due to rate limiting
-    time.sleep(15)
+    time.sleep(20)
 
     # Download report from Trading 212 using above response ID
     response = requests.get(RETRIEVE_REPORT_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
+        # We cannot attempt another retrieve due to rate limits
         return jsonify({"error": response.json()}), response.status_code
 
     # Iterate through response to find correct report
