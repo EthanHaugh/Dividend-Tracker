@@ -123,7 +123,6 @@ def update_open_positions():
     return {"total_count": len(response.json()), "data": response.json()}
 
 
-# TODO: This information needs stored in the DB and queried to avoid hitting T212 API rate limits
 @updates_bp.route("/update-account-cash", methods=["GET"])
 def get_account_cash():
     response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
