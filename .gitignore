@@ -29,3 +29,9 @@ yarn-error.log*
 # SQL Lite
 /python/src/instance
 /python/src/migrations
+
+# Celery
+/python/src/celerybeat*
+
+# Redis
+dump.rdb

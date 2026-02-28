@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify
 from flask import request as flask_request
 from sqlalchemy import func
 
-from db import db
+from app import db
 from models.models import AccountMetadata, Company, Dividend, YearlyDividends
 
 dividends_bp = Blueprint("dividends", __name__)

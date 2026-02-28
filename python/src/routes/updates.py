@@ -7,12 +7,11 @@ from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
     RETRIEVE_ACCOUNT_SUMMARY_URL,
-    RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
-from executors.executors import process_company, process_report, update_account
+from executors.executors import process_report, update_account
 from models.classes import DividendHistory, AccountSummaryResponse
-from db import db
+from app.db import db
 from models.models import DividendReport
 from utils.endpoint_utils import end_of_or_today
 
@@ -110,21 +109,8 @@ def update_report():
     return jsonify({"message": "Report updated successfully"}), 200
 
 
-@updates_bp.route("/update-open-positions", methods=["GET"])
-def update_open_positions():
-    """Fetch and update open positions in the database"""
-
-    response = requests.get(RETRIEVE_OPEN_POSITIONS_URL, headers=REQUEST_HEADERS)
-    if response.status_code != 200:
-        return jsonify({"error": response.json()}), response.status_code
-
-    current_app.extensions["executor"].submit(process_company(response.json()))
-
-    return {"total_count": len(response.json()), "data": response.json()}
-
-
-@updates_bp.route("/update-account-cash", methods=["GET"])
-def get_account_cash():
+@updates_bp.route("/update-account-sumamry", methods=["GET"])
+def get_account_summary():
     response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         return jsonify({"error": response.json()}), response.status_code

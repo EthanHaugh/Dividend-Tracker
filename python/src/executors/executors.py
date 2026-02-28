@@ -5,11 +5,10 @@ from datetime import datetime
 from sqlalchemy import extract, delete, func
 from models.classes import AccountSummaryResponse, DividendHistory
 from sqlalchemy.exc import IntegrityError
-from db import db
+from app.db import db
 
 from models.models import (
     AccountMetadata,
-    Company,
     Dividend,
     DividendReport,
     YearlyDividends,
@@ -70,33 +69,6 @@ def process_report(response_data: DividendHistory, year: int) -> None:
         db.session.commit()
 
     os.remove("downloaded.csv")
-
-
-# TODO: Update this function and the Companies table to accept more extensive data from the new T212 API
-def process_company(response_data: dict) -> None:
-    for company in response_data:
-        # Check for existing company and update
-        existing_company: Company | None = (
-            db.session.query(Company)
-            .filter_by(ticker=company["instrument"]["ticker"])
-            .one_or_none()
-        )
-        if existing_company:
-            existing_company.quantity = company["quantity"]
-            existing_company.average_buy_price = company["averagePricePaid"]
-        else:
-            # If no company is found, add a new row
-            db.session.add(
-                Company(
-                    ticker=company["instrument"]["ticker"],
-                    quantity=company["quantity"],
-                    initial_buy_date=datetime.fromisoformat(company["createdAt"]),
-                    average_buy_price=float(company["averagePricePaid"]),
-                )
-            )
-    db.session.commit()
-
-    # Carry out no clean up for no longer open positions for historical data
 
 
 def update_account(response_data: AccountSummaryResponse) -> None:

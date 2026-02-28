@@ -10,7 +10,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
-from db import db
+from app.db import db
 
 class Company(db.Model):
     __tablename__ = "companies"

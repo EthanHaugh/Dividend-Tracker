@@ -2,7 +2,12 @@
 
 This project is a mono-repo consisting of a Python Backend and a React Frontend in Typescript
 
-To initialise the Backend:
+## Install Necessary Packages
+```
+brew install redis
+````
+
+## To Initialise the Backend
 
 1. Create Python virtual Envionment with the `python` directory
    - `cd ./python`
@@ -24,9 +29,16 @@ To initialise the Backend:
       flask db upgrade
       ```
 
-To initialise the Frontend
+## To Initialise the Frontend
 
 1. Install depedencies
    - Run `make ts-deps`
 2. Start the development server
    - Run `make run-fe`
+
+## To Initialise Redis and Celery
+
+1. Ensure Redis is running
+   - `brew services start redis`
+   - Run `make run-celery-worker`
+   - Run `make run-celery-beat`
