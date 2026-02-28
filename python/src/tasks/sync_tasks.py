@@ -29,18 +29,32 @@ def run_task(func):
 @run_task
 @celery.task
 def sync_positions_task():
+    """
+    Fetch currently open positons from Trading212 and update the database
+    """
+    
     sync_open_positions()
 
 
 @run_task
 @celery.task
 def sync_account_summary_task():
+    """
+    Fetch Account Summary data from Trading212 and update the database
+    """
+
     sync_account_summary()
 
 
 @celery.task
 @run_task
 def sync_dividend_history_task(year: int | None = None):
+    """
+    Request, Download and Process CSV from Trading212
+
+    This is a scheduled job (see config.py) and also can
+    be run on demand via the `/download` endpoint
+    """
     if year is None:
         year = datetime.now().year
 
