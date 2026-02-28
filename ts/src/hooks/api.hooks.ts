@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   AccountCashResponse,
-  ListAvaiableTickersResponse,
   ListCompanyDividendsResponse,
   ListDividendsResponse,
   PieChartResponse,
@@ -181,6 +180,7 @@ export function useListCompanyTotals(
   page: number,
   pageSize: number,
   search: string,
+  filters: string[]
 ) {
   const invalidateToken = useInvalidationToken();
   const [data, setData] = useState<ListDividendsResponse | null>(null);
@@ -190,7 +190,7 @@ export function useListCompanyTotals(
   useEffect(() => {
     setIsLoading(true);
     fetch(
-      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}`,
+      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}`,
     )
       .then((response) => {
         if (!response.ok) {
@@ -207,7 +207,7 @@ export function useListCompanyTotals(
         setData(null);
       })
       .finally(() => setIsLoading(false));
-  }, [page, pageSize, search, invalidateToken]);
+  }, [page, pageSize, search, invalidateToken, filters]);
 
   return { data, isLoading, error };
 }

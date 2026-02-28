@@ -1,13 +1,15 @@
 .search {
   max-width: 250px;
   min-width: 250px;
-  padding: 5px;
-  max-height: 45px;
-  min-height: 45px;
+  max-height: 30px;
+  min-height: 30px;
 }
 
 .row {
   width: 100%;
   display: flex;
-  margin-bottom: 8px;
+}
+
+.table {
+  margin-top: 8px;
 }

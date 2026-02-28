@@ -1,4 +1,4 @@
-import { GetProp, Input, Row, Select, Table, TableProps } from "antd";
+import { Col, GetProp, Input, Row, Select, Table, TableProps } from "antd";
 import styles from "./dividends-table.module.css";
 import { useListAvailableTickers, useListCompanyTotals } from "../../hooks/api.hooks";
 import { DividendPayment } from "../../models/models";
@@ -11,8 +11,10 @@ export function DividendsTable() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
+  const [filters, setFilters] = useState<string[]>([])
+  const [tickers, setTickers] = useState<string[]>([])
 
-  const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search)
+  const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search, filters)
   const { data: availableTickersData, isLoading: tickersLoading } = useListAvailableTickers();
 
   const columns: ColumnsType<DividendPayment> = [
@@ -34,29 +36,52 @@ export function DividendsTable() {
     setSearch(value);
   };
 
-  console.log(availableTickersData)
+  const handleDropdownSelect = (open: boolean) => {
+    if (!open) {
+      setFilters(tickers)
+    }
+  }
+
+  const handleSelect = (ticker: string) => {
+    setTickers([...tickers, ticker])
+  }
+
+  const handleSelectClear = () => {
+    setFilters([])
+    setTickers([])
+  }
 
   return (
     <>
-      <Row justify={"end"} className={styles.row}>
-        <Select
-          mode="multiple"
-          className={styles.search}
-          placeholder="Please select"
-          allowClear
-          showSearch
-          options={availableTickersData?.map((ticker) => { return { value: ticker, label: ticker } })}
-        />
-        <Input.Search
-          placeholder="Search by ticker"
-          className={styles.search}
-          onChange={(e) => handleSearchChange(e.target.value)}
-        />
+      <Row justify={"end"} className={styles.row} gutter={5}>
+        <Col>
+          <Select
+            mode="multiple"
+            className={styles.search}
+            placeholder="Please select"
+            allowClear
+            loading={tickersLoading}
+            maxTagCount={1}
+            showSearch
+            options={availableTickersData?.map((ticker) => { return { value: ticker, label: ticker } })}
+            onOpenChange={handleDropdownSelect}
+            onSelect={handleSelect}
+            onClear={handleSelectClear}
+          />
+        </Col>
+        <Col>
+          <Input.Search
+            placeholder="Search by ticker"
+            className={styles.search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </Col>
       </Row>
       <Row>
         <Table
           dataSource={companyTotalsData?.data}
           columns={columns}
+          className={styles.table}
           rowKey={(row) => row.ticker}
           loading={companyTotalsLoading}
           scroll={{ y: 400 }}
@@ -74,7 +99,6 @@ export function DividendsTable() {
               <DividendsTableRowExpand ticker={record.ticker} />
             ),
           }}
-          className={styles.table}
         />
       </Row>
     </>

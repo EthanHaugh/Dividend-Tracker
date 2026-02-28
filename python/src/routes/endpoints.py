@@ -69,6 +69,10 @@ def list_company_totals():
     page = flask_request.args.get("page", default=1, type=int)
     page_size = flask_request.args.get("page_size", default=10, type=int)
     search = flask_request.args.get("search", default=None, type=str)
+    filters = flask_request.args.get("filters", default=None, type=str)
+
+    if filters:
+        filters = filters.split(',')
 
     offset = (page - 1) * page_size
 
@@ -80,6 +84,9 @@ def list_company_totals():
         .order_by(func.sum(Dividend.total_payment).desc())
     )
     total_count = query.count()
+
+    if filters:
+        query = query.filter(Dividend.ticker.in_(filters))
 
     if search:
         query = query.filter(Dividend.ticker.ilike(f"%{search}%"))
@@ -136,7 +143,15 @@ def list_company_dividends():
 
 @dividends_bp.route("/list-available-tickers", methods=["GET"])
 def get_available_tickers():
-    available_tickers = db.session.query(Company.ticker).order_by(Company.quantity.desc()).all()
+    """ 
+    Fetch available tickers to sort on, use the Dividends table
+    to be in line with the `list_company_totals` endpoint
+    """
+    available_tickers = (
+        db.session.query(Dividend.ticker)
+        .distinct(Dividend.ticker)
+        .all()
+    )
 
     if not available_tickers:
         return (
