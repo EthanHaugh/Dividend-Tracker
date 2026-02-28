@@ -2,13 +2,12 @@ import csv
 import os
 from datetime import datetime
 
-from sqlalchemy import extract, delete, func
-from models.classes import AccountSummaryResponse, DividendHistory
+from sqlalchemy import extract, delete
+from models.classes import DividendHistory
 from sqlalchemy.exc import IntegrityError
 from app.db import db
 
 from models.models import (
-    AccountMetadata,
     Dividend,
     DividendReport,
     YearlyDividends,
@@ -69,27 +68,3 @@ def process_report(response_data: DividendHistory, year: int) -> None:
         db.session.commit()
 
     os.remove("downloaded.csv")
-
-
-def update_account(response_data: AccountSummaryResponse) -> None:
-    total_dividends: float = float(
-        db.session.query(func.sum(YearlyDividends.total_dividends)).scalar()
-    )
-    account_metadata = db.session.query(AccountMetadata).first()
-    estimated_deposits = (
-        response_data.investments.totalCost
-        - total_dividends
-        - response_data.investments.realizedProfitLoss
-    )
-    current_value = response_data.investments.currentValue
-
-    if not account_metadata:
-        account_metadata = AccountMetadata(
-            account_value=current_value, estimated_deposits=estimated_deposits
-        )
-        db.session.add(account_metadata)
-    else:
-        account_metadata.account_value = current_value
-        account_metadata.estimated_deposits = estimated_deposits
-
-    db.session.commit()

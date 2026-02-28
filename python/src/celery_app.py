@@ -20,7 +20,7 @@ def init_celery(app=None):
 
     celery.Task = ContextTask
 
-    from tasks import sync_tasks
+    from tasks import sync_tasks  # noqa: F401
     
     return celery
 

@@ -13,12 +13,12 @@ class Config:
     CELERY_BROKER_URL = "redis://localhost:6379/0"
 
     CELERY_BEAT_SCHEDULE = {
-        'sync-positions-onec-per-day': {
+        'sync-positions-once-every-5-minutes': {
             'task': 'tasks.sync_tasks.sync_positions_task',
-            'schedule': 20 
+            'schedule': 5 * 60
         },
-        'sync-account-summary-every-30-seconds': {
+        'sync-account-summary-once-every-5-minutes': {
             'task': 'tasks.sync_tasks.sync_account_summary_task',
-            'schedule': 30 
+            'schedule': 5 * 60
         }
     }
