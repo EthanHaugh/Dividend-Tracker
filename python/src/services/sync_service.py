@@ -2,9 +2,12 @@ from datetime import datetime
 import requests
 import logging
 
+from sqlalchemy import func
+
 from app.db import db
-from consts.consts import REQUEST_HEADERS, RETRIEVE_OPEN_POSITIONS_URL
-from models.models import Company
+from consts.consts import REQUEST_HEADERS, RETRIEVE_ACCOUNT_SUMMARY_URL, RETRIEVE_OPEN_POSITIONS_URL
+from models.models import AccountMetadata, Company, YearlyDividends
+from models.classes import AccountSummaryResponse
 
 
 logger = logging.getLogger(__name__)
@@ -20,6 +23,7 @@ def sync_open_positions() -> None:
         logger.error(
             f"Unable to retrieve open positions from Trading212: {response.json()}"
         )
+        return
 
     logger.info("Processing Companies...")
     for company in response.json():
@@ -47,3 +51,36 @@ def sync_open_positions() -> None:
 
     # For historical data, carry out no clean up on no longer open poisitons
     # Maybe add a new row in the Company table to indicate if a position is open/close?
+
+def sync_account_summary() -> None:
+    response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
+    if response.status_code != 200:
+        logger.error(
+            f"Unable to retrieve account summary from Trading212: {response.json()}"
+        )
+        return
+    
+    response_data = AccountSummaryResponse(**response.json())
+
+    total_dividends: float = float(
+        db.session.query(func.sum(YearlyDividends.total_dividends)).scalar()
+    )
+    account_metadata = db.session.query(AccountMetadata).first()
+    estimated_deposits = (
+        response_data.investments.totalCost
+        - total_dividends
+        - response_data.investments.realizedProfitLoss
+    )
+    current_value = response_data.investments.currentValue
+
+    if not account_metadata:
+        account_metadata = AccountMetadata(
+            account_value=current_value, estimated_deposits=estimated_deposits
+        )
+        db.session.add(account_metadata)
+    else:
+        account_metadata.account_value = current_value
+        account_metadata.estimated_deposits = estimated_deposits
+
+    db.session.commit()
+

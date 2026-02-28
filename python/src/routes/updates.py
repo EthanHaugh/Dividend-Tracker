@@ -6,11 +6,10 @@ import requests
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
-    RETRIEVE_ACCOUNT_SUMMARY_URL,
     RETRIEVE_REPORT_URL,
 )
-from executors.executors import process_report, update_account
-from models.classes import DividendHistory, AccountSummaryResponse
+from executors.executors import process_report
+from models.classes import DividendHistory
 from app.db import db
 from models.models import DividendReport
 from utils.endpoint_utils import end_of_or_today
@@ -107,16 +106,3 @@ def update_report():
         pass
     db.session.commit()
     return jsonify({"message": "Report updated successfully"}), 200
-
-
-@updates_bp.route("/update-account-sumamry", methods=["GET"])
-def get_account_summary():
-    response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
-    if response.status_code != 200:
-        return jsonify({"error": response.json()}), response.status_code
-
-    current_app.extensions["executor"].submit(
-        update_account(AccountSummaryResponse(**response.json()))
-    )
-
-    return jsonify({**response.json()}), 200

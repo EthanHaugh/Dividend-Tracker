@@ -15,6 +15,10 @@ class Config:
     CELERY_BEAT_SCHEDULE = {
         'sync-positions-onec-per-day': {
             'task': 'tasks.sync_tasks.sync_positions_task',
-            'schedule': 86400 
+            'schedule': 20 
         },
+        'sync-account-summary-every-30-seconds': {
+            'task': 'tasks.sync_tasks.sync_account_summary_task',
+            'schedule': 30 
+        }
     }
