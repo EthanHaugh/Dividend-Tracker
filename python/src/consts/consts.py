@@ -11,8 +11,8 @@ GENERATE_REPORT_URL = "https://live.trading212.com/api/v0/equity/history/exports
 
 RETRIEVE_REPORT_URL = "https://live.trading212.com/api/v0/history/exports"
 
-RETRIEVE_OPEN_POSITIONS_URL = "https://live.trading212.com/api/v0/equity/portfolio"
+RETRIEVE_OPEN_POSITIONS_URL = "https://live.trading212.com/api/v0/equity/positions"
 
-RETRIEVE_ACCOUNT_CASH_URL = "https://live.trading212.com/api/v0/equity/account/cash"
+RETRIEVE_ACCOUNT_SUMMARY_URL = "https://live.trading212.com/api/v0/equity/account/summary"
 
 REQUEST_HEADERS = {"Authorization": f"Basic {API_KEY}"}

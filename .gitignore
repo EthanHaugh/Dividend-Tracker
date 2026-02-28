@@ -25,3 +25,7 @@ dividends.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# SQL Lite
+/python/src/instance
+/python/src/migrations

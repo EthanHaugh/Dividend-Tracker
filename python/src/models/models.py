@@ -9,15 +9,14 @@ from sqlalchemy import (
     ForeignKey,
     func,
 )
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
+from db import db
 
-Base = declarative_base()
-
-
-class Company(Base):
+class Company(db.Model):
     __tablename__ = "companies"
 
     ticker = Column(String(10), unique=True, primary_key=True)
+    name = Column(String(20), unique=True)
     quantity = Column(Float, nullable=False)
     initial_buy_date = Column(Date, nullable=False)
     average_buy_price = Column(Float, nullable=False)
@@ -25,13 +24,14 @@ class Company(Base):
     def asdict(self):
         return {
             "ticker": self.ticker,
+            "name": self.name,
             "quantity": self.quantity,
             "initial_buy_date": self.initial_buy_date,
             "average_buy_price": self.average_buy_price,
         }
 
 
-class Dividend(Base):
+class Dividend(db.Model):
     __tablename__ = "dividends"
 
     dividend_id = Column(Integer, primary_key=True)
@@ -60,7 +60,7 @@ class Dividend(Base):
         }
 
 
-class DividendReport(Base):
+class DividendReport(db.Model):
     __tablename__ = "dividend_reports"
 
     report_id = Column(Integer, primary_key=True)
@@ -77,7 +77,7 @@ class DividendReport(Base):
         }
 
 
-class YearlyDividends(Base):
+class YearlyDividends(db.Model):
     __tablename__ = "yearly_dividends"
 
     id = Column(Integer, primary_key=True)
@@ -94,7 +94,7 @@ class YearlyDividends(Base):
         }
 
 
-class AccountMetadata(Base):
+class AccountMetadata(db.Model):
     __tablename__ = "account_metadata"
 
     id = Column(Integer, primary_key=True)

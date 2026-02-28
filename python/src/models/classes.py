@@ -10,11 +10,30 @@ class DividendHistory:
 
 
 @dataclass
-class AccountCashResponse:
-    free: float
-    total: float
-    ppl: float
-    result: float
-    invested: float
-    pieCash: float
-    blocked: float
+class _AccountCash:
+    availableToTrade: float
+    inPies: float
+    reservedForOrders: float
+
+
+@dataclass
+class _AccountInvestments:
+    currentValue: float
+    realizedProfitLoss: float
+    totalCost: float
+    unrealizedProfitLoss: float
+
+
+@dataclass
+class AccountSummaryResponse:
+    cash: _AccountCash
+    currency: str
+    id: int
+    investments: _AccountInvestments
+    totalValue: float
+
+    def __post_init__(self):
+        if isinstance(self.cash, dict):
+            self.cash = _AccountCash(**self.cash)
+        if isinstance(self.investments, dict):
+            self.investments = _AccountInvestments(**self.investments)

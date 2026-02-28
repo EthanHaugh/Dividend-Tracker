@@ -6,13 +6,13 @@ import requests
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
-    RETRIEVE_ACCOUNT_CASH_URL,
+    RETRIEVE_ACCOUNT_SUMMARY_URL,
     RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
 from executors.executors import process_company, process_report, update_account
-from models.classes import AccountCashResponse, DividendHistory
-from db import Session
+from models.classes import DividendHistory, AccountSummaryResponse
+from db import db
 from models.models import DividendReport
 from utils.endpoint_utils import end_of_or_today
 
@@ -96,19 +96,18 @@ def update_report():
             400,
         )
 
-    with Session() as session:
-        report = (
-            session.query(DividendReport)
-            .filter(DividendReport.year == year)
-            .one_or_none()
-        )
-        if not report:
-            return jsonify({"error": "Report not found"}), 404
+    report = (
+        db.session.query(DividendReport)
+        .filter(DividendReport.year == year)
+        .one_or_none()
+    )
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
 
-        if report.time_to.likes(year):
-            pass
-        session.commit()
-        return jsonify({"message": "Report updated successfully"}), 200
+    if report.time_to.likes(year):
+        pass
+    db.session.commit()
+    return jsonify({"message": "Report updated successfully"}), 200
 
 
 @updates_bp.route("/update-open-positions", methods=["GET"])
@@ -127,12 +126,12 @@ def update_open_positions():
 # TODO: This information needs stored in the DB and queried to avoid hitting T212 API rate limits
 @updates_bp.route("/update-account-cash", methods=["GET"])
 def get_account_cash():
-    response = requests.get(RETRIEVE_ACCOUNT_CASH_URL, headers=REQUEST_HEADERS)
+    response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         return jsonify({"error": response.json()}), response.status_code
 
     current_app.extensions["executor"].submit(
-        update_account(AccountCashResponse(**response.json()))
+        update_account(AccountSummaryResponse(**response.json()))
     )
 
     return jsonify({**response.json()}), 200
