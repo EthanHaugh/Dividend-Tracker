@@ -23,5 +23,3 @@ def init_celery(app=None):
     from tasks import sync_tasks  # noqa: F401
     
     return celery
-
-init_celery()

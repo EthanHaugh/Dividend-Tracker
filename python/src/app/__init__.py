@@ -24,4 +24,7 @@ def create_app() -> Flask:
     app.register_blueprint(dividends_bp)
     app.register_blueprint(updates_bp)
 
+    from celery_app import init_celery
+    init_celery(app)
+
     return app

@@ -1,21 +1,11 @@
-import time
-from flask import Blueprint, current_app, jsonify
-from flask import request as flask_request
-import requests
+import logging
 
-from consts.consts import (
-    GENERATE_REPORT_URL,
-    REQUEST_HEADERS,
-    RETRIEVE_REPORT_URL,
-)
-from executors.executors import process_report
-from models.classes import DividendHistory
-from utils.endpoint_utils import end_of_or_today
+from flask import Blueprint, jsonify
+from flask import request as flask_request
+from tasks.sync_tasks import sync_dividend_history_task
 
 updates_bp = Blueprint("service_updates", __name__)
-
-""" Endpoints that retrieve data from Trading212 and update/add to SQLite DB """
-
+logger = logging.Logger(__name__)
 
 @updates_bp.route("/download", methods=["GET"])
 def get_dividend_history():
@@ -23,60 +13,21 @@ def get_dividend_history():
 
     year_str = flask_request.args.get("year")
     year = int(year_str) if year_str else None
+
     if year is None:
         return (
             jsonify({"error": "Missing required Query String parameter: 'year'"}),
             400,
         )
 
-    payload = {
-        "dataIncluded": {
-            "includeDividends": True,
-            "includeInterest": False,
-            "includeOrders": False,
-            "includeTransactions": False,
-        },
-        "timeFrom": f"{year}-01-01T00:00:00Z",
-        "timeTo": f"{end_of_or_today(year)}T00:00:00Z",
-    }
-    response = requests.post(GENERATE_REPORT_URL, headers=REQUEST_HEADERS, json=payload)
+    logger.info(f"On-demand dividend history download requested for year {year}")
 
-    if response.status_code != 200:
-        return jsonify({"downloadError": response.json()}), response.status_code
+    task = sync_dividend_history_task.delay(year)
 
-    reportId = response.json().get("reportId")
-
-    # Allow Trading 212 to process the request
-    # Can't use a loop here to continue pinging T212 due to rate limiting
-    time.sleep(20)
-
-    # Download report from Trading 212 using above response ID
-    response = requests.get(RETRIEVE_REPORT_URL, headers=REQUEST_HEADERS)
-    if response.status_code != 200:
-        # We cannot attempt another retrieve due to rate limits
-        return jsonify({"error": response.json()}), response.status_code
-
-    # Iterate through response to find correct report
-    for item in response.json():
-        if item["reportId"] == int(reportId):
-            dividend_history = DividendHistory(
-                reportId=item["reportId"],
-                downloadLink=item["downloadLink"],
-                timeFrom=item["timeFrom"],
-                timeTo=item["timeTo"],
-            )
-            # request.urlretrieve(item["downloadLink"], "downloaded.csv")
-            r = requests.get(item["downloadLink"], stream=True)
-            r.raise_for_status()
-            with open("downloaded.csv", "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-
-            current_app.extensions["executor"].submit(
-                process_report(dividend_history, year)
-            )
-
-            return jsonify(item), 200
-
-    return jsonify({"error": f"Report with ID: {reportId} does not exist"}), 404
+    return jsonify(
+        {
+            "status": "processing",
+            "message": f"Dividend history download started for year {year}",
+            "task_id": task.id,
+        }
+    ), 202 
