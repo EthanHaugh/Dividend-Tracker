@@ -10,8 +10,6 @@ from consts.consts import (
 )
 from executors.executors import process_report
 from models.classes import DividendHistory
-from app.db import db
-from models.models import DividendReport
 from utils.endpoint_utils import end_of_or_today
 
 updates_bp = Blueprint("service_updates", __name__)
@@ -82,27 +80,3 @@ def get_dividend_history():
             return jsonify(item), 200
 
     return jsonify({"error": f"Report with ID: {reportId} does not exist"}), 404
-
-
-@updates_bp.route("/update-report", methods=["GET"])
-def update_report():
-    year_str = flask_request.args.get("year")
-    year = int(year_str) if year_str else None
-    if year is None:
-        return (
-            jsonify({"error": "Missing required Query String parameter: 'year'"}),
-            400,
-        )
-
-    report = (
-        db.session.query(DividendReport)
-        .filter(DividendReport.year == year)
-        .one_or_none()
-    )
-    if not report:
-        return jsonify({"error": "Report not found"}), 404
-
-    if report.time_to.likes(year):
-        pass
-    db.session.commit()
-    return jsonify({"message": "Report updated successfully"}), 200
