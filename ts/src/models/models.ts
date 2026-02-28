@@ -48,3 +48,7 @@ export interface Dividend {
   amount: number;
   currency: string;
 }
+
+export interface ListAvaiableTickersResponse {
+  data: string[]
+}

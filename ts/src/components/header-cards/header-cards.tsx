@@ -55,7 +55,7 @@ export function HeaderCards() {
             maximumFractionDigits: 2,
           })}`}
           loading={accountCashLoading}
-          footerTitle="Estimated Deposits"
+          footerTitle="Est. Deposits"
           footerValue={`£${accountCash?.estimated_deposits.toLocaleString(
             undefined,
             {

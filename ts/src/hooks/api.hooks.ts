@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   AccountCashResponse,
+  ListAvaiableTickersResponse,
   ListCompanyDividendsResponse,
   ListDividendsResponse,
   PieChartResponse,
@@ -280,4 +281,35 @@ export function useUpdateCurrentYearDividends() {
   };
 
   return { mutate, data, isLoading, error };
+}
+
+
+export function useListAvailableTickers() {
+  const [data, setData] = useState<string[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(
+      `${BASE_URL}/list-available-tickers`,
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result) => {
+        setData(result.data);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+        setData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return { data, isLoading, error };
 }

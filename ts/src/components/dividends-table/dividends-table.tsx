@@ -1,6 +1,6 @@
-import { GetProp, Input, Row, Table, TableProps } from "antd";
+import { GetProp, Input, Row, Select, Table, TableProps } from "antd";
 import styles from "./dividends-table.module.css";
-import { useListCompanyTotals } from "../../hooks/api.hooks";
+import { useListAvailableTickers, useListCompanyTotals } from "../../hooks/api.hooks";
 import { DividendPayment } from "../../models/models";
 import { useState } from "react";
 import { DividendsTableRowExpand } from "../dividends-table-row-expand/dividends-table-row-expand";
@@ -12,7 +12,8 @@ export function DividendsTable() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
 
-  const { data, isLoading } = useListCompanyTotals(page, pageSize, search);
+  const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search)
+  const { data: availableTickersData, isLoading: tickersLoading } = useListAvailableTickers();
 
   const columns: ColumnsType<DividendPayment> = [
     {
@@ -33,9 +34,19 @@ export function DividendsTable() {
     setSearch(value);
   };
 
+  console.log(availableTickersData)
+
   return (
     <>
       <Row justify={"end"} className={styles.row}>
+        <Select
+          mode="multiple"
+          className={styles.search}
+          placeholder="Please select"
+          allowClear
+          showSearch
+          options={availableTickersData?.map((ticker) => { return { value: ticker, label: ticker } })}
+        />
         <Input.Search
           placeholder="Search by ticker"
           className={styles.search}
@@ -44,15 +55,15 @@ export function DividendsTable() {
       </Row>
       <Row>
         <Table
-          dataSource={data?.data}
+          dataSource={companyTotalsData?.data}
           columns={columns}
           rowKey={(row) => row.ticker}
-          loading={isLoading}
+          loading={companyTotalsLoading}
           scroll={{ y: 400 }}
           pagination={{
             current: page,
             pageSize: pageSize,
-            total: data?.total_count,
+            total: companyTotalsData?.total_count,
             onChange: (page, pageSize) => {
               setPage(page);
               setPageSize(pageSize);
