@@ -37,7 +37,7 @@ const DividendsLineChart = () => {
         label: "Total Dividends",
         data: dataPoints,
         fill: false,
-        borderColor: "rgba(255, 99, 132, 1)", // pinkish red
+        borderColor: "rgba(0, 89, 255, 1)", // pinkish red
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         tension: 0.3,
         pointRadius: 4,
