@@ -9,6 +9,7 @@ interface InfoCardProps {
   value?: string | number;
   footerTitle?: string;
   footerValue?: string | number;
+  footerIcon?: ReactElement;
   suffix?: ReactElement;
 }
 
@@ -18,6 +19,7 @@ export function InfoCard({
   loading,
   footerTitle,
   footerValue,
+  footerIcon,
   suffix,
 }: InfoCardProps) {
   return (
@@ -31,7 +33,10 @@ export function InfoCard({
               className={styles.statistic}
             />
             <Typography.Text type="secondary" className={styles.footer}>
-              {footerTitle ? `${footerTitle}: ${footerValue}` : <>&nbsp;</>}
+              {/* <div>{footerTitle}{footerTitle ? ': ' : ''}{footerValue}{footerIcon && footerIcon}</div> */}
+              {footerTitle && <div className={styles.footerItem}>{footerTitle}:</div>}
+              {footerValue && <div className={styles.footerItem}>{footerValue}</div>}
+              {footerIcon && <div className={styles.footerItem}>{footerIcon}</div>}
             </Typography.Text>
           </Col>
           <Col span={4}>

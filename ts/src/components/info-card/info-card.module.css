@@ -5,6 +5,11 @@
 
   .footer {
     font-size: smaller;
+
+    .footerItem {
+      display:inline-block;
+      margin: 2px;
+    }
   }
 
   .icon {

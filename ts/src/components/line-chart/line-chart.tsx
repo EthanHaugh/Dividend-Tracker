@@ -28,7 +28,7 @@ const DividendsLineChart = () => {
   const { data, isLoading } = useGetYearlyDividends();
 
   const labels = data?.map((item) => item.year);
-  const dataPoints = data?.map((item) => parseFloat(item.total_dividends));
+  const dataPoints = data?.map((item) => item.total_dividends);
 
   const chartData = {
     labels,

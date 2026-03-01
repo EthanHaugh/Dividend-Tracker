@@ -61,7 +61,7 @@ export function useGetTotalDividends() {
 
 export function useGetPreviousYearDividends() {
   const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<number | null>(null);
+  const [data, setData] = useState<YearlyDividendsResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -76,7 +76,7 @@ export function useGetPreviousYearDividends() {
         return response.json();
       })
       .then((result) => {
-        setData(result[0].total_dividends);
+        setData(result[0]);
         setError(null);
       })
       .catch((err) => {

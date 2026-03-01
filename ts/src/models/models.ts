@@ -27,7 +27,8 @@ export interface YearlyDividendsResponse {
   year: number;
   created_at: string;
   id: number;
-  total_dividends: string;
+  total_dividends: number;
+  yoy_increase: number;
 }
 
 export interface ListCompanyDividendsResponse {
