@@ -29,6 +29,13 @@ from utils.endpoint_utils import end_of_or_today
 
 logger = logging.getLogger(__name__)
 
+""" 
+Celery Tasks to fetch and update the DB 
+
+For more information on the Trading 212 API see
+https://docs.trading212.com/api
+"""
+
 
 def sync_open_positions() -> None:
     """Fetch and update open positions in the database"""
@@ -59,6 +66,7 @@ def sync_open_positions() -> None:
             db.session.add(
                 Company(
                     ticker=company["instrument"]["ticker"],
+                    name=company["instrument"]["name"],
                     quantity=company["quantity"],
                     initial_buy_date=datetime.fromisoformat(company["createdAt"]),
                     average_buy_price=float(company["averagePricePaid"]),
