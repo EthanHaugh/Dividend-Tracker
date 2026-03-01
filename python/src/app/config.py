@@ -14,6 +14,7 @@ class Config:
 
     # Assign Celery Broker to Redis
     CELERY_BROKER_URL = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
     # Register re-occuring tasks
     CELERY_BEAT_SCHEDULE = {

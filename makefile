@@ -8,10 +8,10 @@ run-web:
 	flask --app ./python/src/run.py run --debug
 
 run-celery-worker:
-	cd ./python/src && celery -A celery_app.celery worker --loglevel=info
+	cd ./python/src && celery -A celery_run.celery worker --loglevel=info
 
 run-celery-beat:
-	cd ./python/src && celery -A celery_app.celery beat --loglevel=info
+	cd ./python/src && celery -A celery_run.celery beat --loglevel=info
 
 run-fe:
 	cd ./ts/ && npm run start

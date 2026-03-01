@@ -6,7 +6,7 @@ from app.config import Config
 from app.db import db
 from routes.endpoints import dividends_bp
 from routes.updates import updates_bp
-import models
+import models  # noqa: F401
 
 executor = Executor()
 migrate = Migrate()
