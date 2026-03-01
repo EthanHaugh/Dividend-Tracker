@@ -8,7 +8,6 @@ import {
 } from "../models/models";
 import { BASE_URL } from "./consts";
 
-// Simple invalidation utilities: incrementing token + subscriber set.
 let _invalidateId = 0;
 const _invalidateListeners = new Set<(id: number) => void>();
 
@@ -16,7 +15,9 @@ export function invalidateApi() {
   _invalidateId++;
   _invalidateListeners.forEach((l) => l(_invalidateId));
 }
-
+/*
+  Used to invalidate current API responses
+*/
 export function useInvalidationToken() {
   const [token, setToken] = useState<number>(_invalidateId);
   useEffect(() => {
@@ -25,79 +26,20 @@ export function useInvalidationToken() {
     return () => {
       _invalidateListeners.delete(listener);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return token;
 }
 
-export function useGetTotalDividends() {
+// Generic fetch hook for GET requests
+function useFetch<T>(url: string, dependencies: unknown[] = []) {
   const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<number | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | undefined>(undefined);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(`${BASE_URL}/total-dividends`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result.total_dividends);
-        setError(undefined);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(undefined);
-      })
-      .finally(() => setIsLoading(false));
-  }, [invalidateToken]);
-
-  return { data, isLoading, error };
-}
-
-export function useGetPreviousYearDividends() {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<YearlyDividendsResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const year = new Date().getFullYear() - 1;
-    setIsLoading(true);
-    fetch(`${BASE_URL}/yearly-dividends?year=${year}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result[0]);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, [invalidateToken]);
-
-  return { data, isLoading, error };
-}
-
-export function useGetYearlyDividends() {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<YearlyDividendsResponse[] | null>([]);
+  const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
-    fetch(`${BASE_URL}/yearly-dividends`)
+    fetch(url)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -109,167 +51,35 @@ export function useGetYearlyDividends() {
         setError(null);
       })
       .catch((err) => {
-        setError(err);
-        setData([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, [invalidateToken]);
-
-  return { data, isLoading, error };
-}
-
-export function useGetAccountCash() {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<AccountCashResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(`${BASE_URL}/account-cash`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
+        setError(err as Error);
         setData(null);
       })
       .finally(() => setIsLoading(false));
-  }, [invalidateToken]);
+  }, [url, invalidateToken, ...dependencies]);
 
   return { data, isLoading, error };
 }
 
-export function useGetPieChartData() {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<PieChartResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(`${BASE_URL}/pie-chart`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, [invalidateToken]);
-
-  return { data, isLoading, error };
-}
-
-export function useListCompanyTotals(
-  page: number,
-  pageSize: number,
-  search: string,
-  filters: string[]
-) {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<ListDividendsResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(
-      `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}`,
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, [page, pageSize, search, invalidateToken, filters]);
-
-  return { data, isLoading, error };
-}
-
-export function useListCompanyDividends(
-  page: number,
-  pageSize: number,
-  ticker: string,
-) {
-  const invalidateToken = useInvalidationToken();
-  const [data, setData] = useState<ListCompanyDividendsResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(
-      `${BASE_URL}/list-company-dividends?page=${page}&page_size=${pageSize}&ticker=${ticker}`,
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, [page, pageSize, ticker, invalidateToken]);
-
-  return { data, isLoading, error };
-}
-
-export function useUpdateCurrentYearDividends() {
-  const [data, setData] = useState<ListCompanyDividendsResponse | null>(null);
+// Generic mutation hook for POST/GET mutations
+function useMutation<T>(onSuccess?: (data?: T) => void) {
+  const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Expose a mutate function so callers can trigger the download on demand.
-  const mutate = async (
-    year?: number,
-  ): Promise<ListCompanyDividendsResponse | null> => {
+  const mutate = async (url: string): Promise<T | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${BASE_URL}/download?year=${year || new Date().getFullYear()}`,
-      );
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const result = (await response.json()) as ListCompanyDividendsResponse;
+      const result = (await response.json()) as T;
       setData(result);
       setError(null);
-      // Invalidate other hooks so they refetch their data
-      invalidateApi();
+      if (onSuccess) {
+        onSuccess()
+      }
       return result;
     } catch (err) {
       setError(err as Error);
@@ -283,33 +93,71 @@ export function useUpdateCurrentYearDividends() {
   return { mutate, data, isLoading, error };
 }
 
+export function useGetTotalDividends() {
+  return useFetch<{ total_dividends: number }>(`${BASE_URL}/total-dividends`, []);
+}
+
+export function useGetPreviousYearDividends() {
+  const year = new Date().getFullYear() - 1;
+  const { data: fullData, ...rest } = useFetch<YearlyDividendsResponse[]>(
+    `${BASE_URL}/yearly-dividends?year=${year}`
+  );
+  
+  return {
+    data: fullData ? fullData[0] : null,
+    ...rest,
+  };
+}
+
+export function useGetYearlyDividends() {
+  return useFetch<YearlyDividendsResponse[]>(`${BASE_URL}/yearly-dividends`);
+}
+
+export function useGetAccountCash() {
+  return useFetch<AccountCashResponse>(`${BASE_URL}/account-cash`);
+}
+
+export function useGetPieChartData() {
+  return useFetch<PieChartResponse>(`${BASE_URL}/pie-chart`);
+}
+
+export function useListCompanyTotals(
+  page: number,
+  pageSize: number,
+  search: string,
+  filters: string[]
+) {
+  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}`;
+  return useFetch<ListDividendsResponse>(url, [page, pageSize, search, filters]);
+}
+
+export function useListCompanyDividends(
+  page: number,
+  pageSize: number,
+  ticker: string,
+) {
+  const url = `${BASE_URL}/list-company-dividends?page=${page}&page_size=${pageSize}&ticker=${ticker}`;
+  return useFetch<ListCompanyDividendsResponse>(url, [page, pageSize, ticker]);
+}
+
+export function useUpdateCurrentYearDividends(onSuccess?: () => void) {
+  const { mutate: baseMutate, ...rest } = useMutation<ListCompanyDividendsResponse>(onSuccess);
+  
+  const mutate = async (year?: number) => {
+    const url = `${BASE_URL}/download?year=${year || new Date().getFullYear()}`;
+    return baseMutate(url);
+  };
+
+  return { mutate, ...rest };
+}
 
 export function useListAvailableTickers() {
-  const [data, setData] = useState<string[] | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(
-      `${BASE_URL}/list-available-tickers`,
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        setData(result.data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err);
-        setData(null);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  return { data, isLoading, error };
+  const { data: fullData, ...rest } = useFetch<{ data: string[] }>(
+    `${BASE_URL}/list-available-tickers`
+  );
+  
+  return {
+    data: fullData?.data || null,
+    ...rest,
+  };
 }

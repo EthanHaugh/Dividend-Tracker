@@ -28,7 +28,7 @@ export function HeaderCards() {
       <Col span={6}>
         <InfoCard
           title="Total Dividends"
-          value={`£ ${totalDividends?.toLocaleString(undefined, {
+          value={`£ ${totalDividends?.total_dividends.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}`}
@@ -71,7 +71,7 @@ export function HeaderCards() {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }
-          )}` }
+          )}`}
           footerIcon={
             <Tooltip title="We don't have access to your deposit value, so we calculate this from total cost of shares minus your total dividends along with profit and loss">
               <InfoCircleOutlined />
