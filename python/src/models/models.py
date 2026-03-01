@@ -84,6 +84,7 @@ class YearlyDividends(db.Model):
     year = Column(Integer, nullable=False)
     total_dividends = Column(Numeric(10, 4), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    yoy_increase: Mapped[float] = mapped_column(Float, server_default=u'0.0', nullable=False)
 
     def asdict(self):
         return {

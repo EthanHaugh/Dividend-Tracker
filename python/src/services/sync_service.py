@@ -16,7 +16,13 @@ from consts.consts import (
     RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
-from models.models import AccountMetadata, Company, Dividend, DividendReport, YearlyDividends
+from models.models import (
+    AccountMetadata,
+    Company,
+    Dividend,
+    DividendReport,
+    YearlyDividends,
+)
 from models.classes import AccountSummaryResponse, DividendHistory
 from utils.endpoint_utils import end_of_or_today
 
@@ -194,13 +200,25 @@ def sync_dividend_history(year: int):
                         )
                     )
 
+                previous_year_count = (
+                    db.session.query(YearlyDividends.total_dividends)
+                    .filter(YearlyDividends.year == year - 1)
+                    .one_or_none()
+                )
+                percentage_increase: float = 0.0
+                if previous_year_count:
+                    percentage_increase = (
+                        (total_count - previous_year_count.total_dividends)
+                        / previous_year_count.total_dividends
+                    ) * 100
+
                 db.session.add(
                     YearlyDividends(
                         year=year,
                         total_dividends=total_count,
+                        percentage_increase=percentage_increase,
                     )
                 )
                 db.session.commit()
 
             os.remove("downloaded.csv")
-
