@@ -10,6 +10,7 @@ import {
   Space,
   Button,
   DatePicker,
+  message,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -24,11 +25,16 @@ import { useState } from "react";
 import dayjs from "dayjs";
 
 function App() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [year, setYear] = useState<number | undefined>(
     new Date().getFullYear(),
   );
+
+  const handleJobQueued = () => {
+    messageApi.success('Job Queued! This will take a few minutes...')
+  }
   const { mutate: updateDividends, isLoading: isUpdating } =
-    useUpdateCurrentYearDividends();
+    useUpdateCurrentYearDividends(handleJobQueued);
 
   const handleRefresh = () => {
     // call the mutate function returned by the hook
@@ -61,6 +67,7 @@ function App() {
         },
       }}
     >
+      {contextHolder}
       <Layout>
         <Header className={styles.header}>
           <Row
