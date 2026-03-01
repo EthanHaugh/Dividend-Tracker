@@ -127,6 +127,7 @@ def sync_dividend_history(year: int):
         logger.error(
             f"Unable to request report from Trading212 for {year}: {response.json()}"
         )
+        return
 
     reportId = response.json().get("reportId")
 
@@ -140,6 +141,7 @@ def sync_dividend_history(year: int):
         logger.error(
             f"Report for {year} requested successfully, though retrevial from Trading212 has failed: {response.json()}"
         )
+        return
 
     # Iterate through response to find correct report
     for item in response.json():
@@ -206,17 +208,18 @@ def sync_dividend_history(year: int):
                     .one_or_none()
                 )
                 percentage_increase: float = 0.0
+
                 if previous_year_count:
+                    previous_total = float(previous_year_count.total_dividends)
                     percentage_increase = (
-                        (total_count - previous_year_count.total_dividends)
-                        / previous_year_count.total_dividends
+                        (total_count - previous_total) / previous_total
                     ) * 100
 
                 db.session.add(
                     YearlyDividends(
                         year=year,
                         total_dividends=total_count,
-                        percentage_increase=percentage_increase,
+                        yoy_increase=percentage_increase,
                     )
                 )
                 db.session.commit()

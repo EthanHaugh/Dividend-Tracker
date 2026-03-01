@@ -91,6 +91,7 @@ class YearlyDividends(db.Model):
             "id": self.id,
             "year": self.year,
             "total_dividends": self.total_dividends,
+            "yoy_increase": self.yoy_increase,
             "created_at": self.created_at,
         }
 
