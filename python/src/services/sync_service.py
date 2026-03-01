@@ -209,7 +209,7 @@ def sync_dividend_history(year: int):
                 )
                 percentage_increase: float = 0.0
 
-                if previous_year_count:
+                if previous_year_count and float(previous_year_count.total_dividends) > 0:
                     previous_total = float(previous_year_count.total_dividends)
                     percentage_increase = (
                         (total_count - previous_total) / previous_total
