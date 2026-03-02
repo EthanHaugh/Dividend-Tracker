@@ -9,6 +9,7 @@ export interface PieChartResponse {
     ticker: string;
     total_payment: number;
   }[];
+  total_count: number;
 }
 
 export interface ListDividendsResponse {

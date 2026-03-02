@@ -84,10 +84,11 @@ def get_pie_chart_data():
         )
         .group_by(Dividend.ticker)
         .order_by(func.sum(Dividend.total_payment).desc())
-        .all()
     )
     return (
-        jsonify({"data": [d._asdict() for d in query]}),
+        jsonify(
+            {"data": [d._asdict() for d in query.all()], "total_count": query.count()}
+        ),
         200,
     )
 
