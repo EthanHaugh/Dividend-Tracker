@@ -1,11 +1,40 @@
+from enum import Enum
 from flask import Blueprint, jsonify
 from flask import request as flask_request
 from sqlalchemy import func
+from sqlalchemy.orm import Query
 
 from app import db
 from models.models import AccountMetadata, Company, Dividend, YearlyDividends
 
 dividends_bp = Blueprint("dividends", __name__)
+
+
+# Default type for sort_direction, if a passed value is not of type SortDirection
+# the flask_request.args.get() with return the default value
+class SortDirection(Enum):
+    ASCENDING = "asc"
+    DESCENDING = "desc"
+
+
+def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:
+    """Validate `sort_by` parameter to avoid SQL Injection"""
+
+    if sort_by:
+        # Avoid SQL Injection
+        if sort_by not in allowed_sort_fields:
+            return False
+
+    return True
+
+
+def _sort_query(query: Query, sort_by: str, sort_direction: SortDirection) -> Query:
+    if sort_direction == SortDirection.DESCENDING:
+        query = query.order_by(getattr(Dividend, sort_by).desc())
+    else:
+        query = query.order_by(getattr(Dividend, sort_by).asc())
+
+    return query
 
 
 @dividends_bp.route("/open-positions", methods=["GET"])
@@ -70,20 +99,29 @@ def list_company_totals():
     page_size = flask_request.args.get("page_size", default=10, type=int)
     search = flask_request.args.get("search", default=None, type=str)
     filters = flask_request.args.get("filters", default=None, type=str)
+    sort_by = flask_request.args.get("sort_by", default="ticker", type=str)
+    sort_direction = flask_request.args.get(
+        "sort_direction", default=SortDirection.DESCENDING, type=SortDirection
+    )
+
+    allowed_sort_fields = ["ticker", "total_payment"]
+
+    if not _vaidate_sort_by(sort_by, allowed_sort_fields):
+        return jsonify(
+            {"error": f"sort_by parameter must be one of: {allowed_sort_fields}"}
+        ), 400
 
     if filters:
-        filters = filters.split(',')
+        filters = filters.split(",")
 
     offset = (page - 1) * page_size
 
-    query = (
-        db.session.query(
-            Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
-        )
-        .group_by(Dividend.ticker)
-        .order_by(func.sum(Dividend.total_payment).desc())
-    )
+    query = db.session.query(
+        Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
+    ).group_by(Dividend.ticker)
     total_count = query.count()
+
+    query = _sort_query(query, sort_by, sort_direction)
 
     if filters:
         query = query.filter(Dividend.ticker.in_(filters))
@@ -111,6 +149,11 @@ def list_company_dividends():
     page = flask_request.args.get("page", default=1, type=int)
     page_size = flask_request.args.get("page_size", default=10, type=int)
     ticker = flask_request.args.get("ticker", default=None, type=str)
+    sort_by = flask_request.args.get("sort_by", default="payment_date", type=str)
+    sort_direction = flask_request.args.get(
+        "sort_direction", default=SortDirection.ASCENDING, type=SortDirection
+    )
+    allowed_sort_fields = ["payment_date", "ticker", "total_payment"]
 
     if not ticker:
         return (
@@ -118,14 +161,17 @@ def list_company_dividends():
             400,
         )
 
+    if not _vaidate_sort_by(sort_by, allowed_sort_fields):
+        return jsonify(
+            {"error": f"sort_by parameter must be one of: {allowed_sort_fields}"}
+        ), 400
+
     offset = (page - 1) * page_size
 
-    query = (
-        db.session.query(Dividend)
-        .filter(Dividend.ticker == ticker)
-        .order_by(Dividend.payment_date.desc())
-    )
+    query = db.session.query(Dividend).filter(Dividend.ticker == ticker)
     total_count = query.count()
+
+    query = _sort_query(query, sort_by, sort_direction)
 
     query = query.offset(offset).limit(page_size)
     return (
@@ -143,17 +189,18 @@ def list_company_dividends():
 
 @dividends_bp.route("/list-available-tickers", methods=["GET"])
 def get_available_tickers():
-    """ 
+    """
     Fetch available tickers to sort on, use the Dividends table
     to be in line with the `list_company_totals` endpoint
     """
-    available_tickers = (
-        db.session.query(Dividend.ticker)
-        .distinct(Dividend.ticker)
-        .all()
+    sort_direction = flask_request.args.get(
+        "sort_direction", default=SortDirection.ASCENDING, type=SortDirection
     )
+    query = db.session.query(Dividend.ticker).distinct(Dividend.ticker)
 
-    if not available_tickers:
+    query = _sort_query(query, "ticker", sort_direction)
+
+    if not query:
         return (
             jsonify(
                 {
@@ -163,4 +210,4 @@ def get_available_tickers():
             500,
         )
 
-    return jsonify({"data": [ticker.ticker for ticker in available_tickers]}), 200
+    return jsonify({"data": [ticker.ticker for ticker in query.all()]}), 200
