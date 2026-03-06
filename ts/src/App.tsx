@@ -12,6 +12,7 @@ import {
   message,
   Spin,
   Result,
+  Button,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -89,6 +90,9 @@ function App() {
               </div>
               <span>
                 <Space.Compact>
+                  <Button onClick={handleRefresh} loading={isUpdating}>
+                    Refresh
+                  </Button>
                   <DatePicker
                     picker="year"
                     placeholder="Select year"
