@@ -43,6 +43,11 @@ def get_open_positions():
     return jsonify([c.asdict() for c in query]), 200
 
 
+@dividends_bp.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
+
 @dividends_bp.route("/yearly-dividends", methods=["GET"])
 def get_yearly_dividends():
     query = db.session.query(YearlyDividends).order_by(YearlyDividends.year.asc())

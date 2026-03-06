@@ -34,6 +34,7 @@ export function useInvalidationToken() {
 function useFetch<T>(url: string, dependencies: unknown[] = []) {
   const invalidateToken = useInvalidationToken();
   const [data, setData] = useState<T | null>(null);
+  const [statusCode, setStatusCode] = useState<number>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -43,6 +44,9 @@ function useFetch<T>(url: string, dependencies: unknown[] = []) {
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        if (response.status) {
+          setStatusCode(response.status)
         }
         return response.json();
       })
@@ -57,7 +61,7 @@ function useFetch<T>(url: string, dependencies: unknown[] = []) {
       .finally(() => setIsLoading(false));
   }, [url, invalidateToken, ...dependencies]);
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, statusCode };
 }
 
 // Generic mutation hook for POST/GET mutations
@@ -154,6 +158,17 @@ export function useUpdateCurrentYearDividends(onSuccess?: () => void) {
 export function useListAvailableTickers() {
   const { data: fullData, ...rest } = useFetch<{ data: string[] }>(
     `${BASE_URL}/list-available-tickers`
+  );
+  
+  return {
+    data: fullData?.data || null,
+    ...rest,
+  };
+}
+
+export function useHealthCheck() {
+  const { data: fullData, ...rest } = useFetch<{ data: string[] }>(
+    `${BASE_URL}/health`
   );
   
   return {
