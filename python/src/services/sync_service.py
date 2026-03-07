@@ -8,7 +8,7 @@ import logging
 from sqlalchemy import delete, extract, func
 from sqlalchemy.exc import IntegrityError
 
-from app.db.db import db
+from app.db import db
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,

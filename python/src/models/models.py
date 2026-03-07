@@ -10,10 +10,10 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db import Model
+from app.db import db
 
 
-class Company(Model):
+class Company(db.Model):
     __tablename__ = "companies"
 
     id = Column(Integer, primary_key=True)
@@ -38,7 +38,7 @@ class Company(Model):
         }
 
 
-class Dividend(Model):
+class Dividend(db.Model):
     __tablename__ = "dividends"
 
     dividend_id = Column(Integer, primary_key=True)
@@ -71,7 +71,7 @@ class Dividend(Model):
         }
 
 
-class DividendReport(Model):
+class DividendReport(db.Model):
     __tablename__ = "dividend_reports"
 
     report_id = Column(Integer, primary_key=True)
@@ -88,7 +88,7 @@ class DividendReport(Model):
         }
 
 
-class YearlyDividends(Model):
+class YearlyDividends(db.Model):
     __tablename__ = "yearly_dividends"
 
     id = Column(Integer, primary_key=True)
@@ -111,7 +111,7 @@ class YearlyDividends(Model):
         }
 
 
-class AccountMetadata(Model):
+class AccountMetadata(db.Model):
     __tablename__ = "account_metadata"
 
     id = Column(Integer, primary_key=True)
