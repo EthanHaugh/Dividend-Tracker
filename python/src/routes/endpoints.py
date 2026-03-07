@@ -1,4 +1,5 @@
 from enum import Enum
+from flask_sqlalchemy.model import Model
 from flask import Blueprint, jsonify
 from flask import request as flask_request
 from sqlalchemy import func
@@ -28,11 +29,13 @@ def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:
     return True
 
 
-def _sort_query(query: Query, sort_by: str, sort_direction: SortDirection) -> Query:
+def _sort_query(
+    query: Query, cls: Model, sort_by: str, sort_direction: SortDirection
+) -> Query:
     if sort_direction == SortDirection.DESCENDING:
-        query = query.order_by(getattr(Dividend, sort_by).desc())
+        query = query.order_by(getattr(cls, sort_by).desc())
     else:
-        query = query.order_by(getattr(Dividend, sort_by).asc())
+        query = query.order_by(getattr(cls, sort_by).asc())
 
     return query
 
@@ -85,9 +88,13 @@ def get_pie_chart_data():
     """List total dividends by company for the pie chart."""
     query = (
         db.session.query(
-            Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
+            Dividend.company_id,
+            Company.name,
+            Company.ticker,
+            func.sum(Dividend.total_payment).label("total_payment"),
         )
-        .group_by(Dividend.ticker)
+        .join(Company)
+        .group_by(Dividend.company_id)
         .order_by(func.sum(Dividend.total_payment).desc())
     )
     return (
@@ -122,12 +129,16 @@ def list_company_totals():
 
     offset = (page - 1) * page_size
 
-    query = db.session.query(
-        Dividend.ticker, func.sum(Dividend.total_payment).label("total_payment")
-    ).group_by(Dividend.ticker)
+    query = (
+        db.session.query(
+            Company.ticker, func.sum(Dividend.total_payment).label("total_payment")
+        )
+        .join(Dividend)
+        .group_by(Company.ticker)
+    )
     total_count = query.count()
 
-    query = _sort_query(query, sort_by, sort_direction)
+    query = _sort_query(query, Company, sort_by, sort_direction)
 
     if filters:
         query = query.filter(Dividend.ticker.in_(filters))
@@ -174,10 +185,10 @@ def list_company_dividends():
 
     offset = (page - 1) * page_size
 
-    query = db.session.query(Dividend).filter(Dividend.ticker == ticker)
+    query = db.session.query(Dividend).join(Company).filter(Company.ticker == ticker)
     total_count = query.count()
 
-    query = _sort_query(query, sort_by, sort_direction)
+    query = _sort_query(query, Dividend, sort_by, sort_direction)
 
     query = query.offset(offset).limit(page_size)
     return (
@@ -202,9 +213,9 @@ def get_available_tickers():
     sort_direction = flask_request.args.get(
         "sort_direction", default=SortDirection.ASCENDING, type=SortDirection
     )
-    query = db.session.query(Dividend.ticker).distinct(Dividend.ticker)
+    query = db.session.query(Company.ticker, Company.name).distinct(Company.id)
 
-    query = _sort_query(query, "ticker", sort_direction)
+    query = _sort_query(query, Company, "ticker", sort_direction)
 
     if not query:
         return (
@@ -216,4 +227,4 @@ def get_available_tickers():
             500,
         )
 
-    return jsonify({"data": [ticker.ticker for ticker in query.all()]}), 200
+    return jsonify({"data": [company._asdict() for company in query.all()]}), 200

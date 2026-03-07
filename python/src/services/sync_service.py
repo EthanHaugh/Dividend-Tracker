@@ -8,7 +8,7 @@ import logging
 from sqlalchemy import delete, extract, func
 from sqlalchemy.exc import IntegrityError
 
-from app.db import db
+from app.db.db import db
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
@@ -91,9 +91,11 @@ def sync_account_summary() -> None:
 
     response_data = AccountSummaryResponse(**response.json())
 
+    # Yearly Dividends may be empty if no reports have been downloaded
     total_dividends: float = float(
-        db.session.query(func.sum(YearlyDividends.total_dividends)).scalar()
+        db.session.query(func.sum(YearlyDividends.total_dividends)).scalar() or 0.0
     )
+
     account_metadata = db.session.query(AccountMetadata).first()
     estimated_deposits = (
         response_data.investments.totalCost
@@ -117,7 +119,9 @@ def sync_account_summary() -> None:
 def sync_dividend_history(year: int):
     """Request Trading 212 to make a new Report and Download it"""
 
-    logger.info(f"Starting dividend history download for year {year}")
+    placeholder_company = (
+        db.session.query(Company).filter(Company.ticker == "UNKNOWN").one()
+    )
 
     payload = {
         "dataIncluded": {
@@ -197,11 +201,18 @@ def sync_dividend_history(year: int):
                 reader = csv.DictReader(file)
                 total_count: float = 0.0
                 for row in reader:
+                    company = (
+                        db.session.query(Company)
+                        .filter(Company.name == row["Name"])
+                        .one_or_none()
+                    )
                     total_count += float(row["Total"])
                     db.session.add(
                         Dividend(
                             report_id=dividend_history.reportId,
-                            ticker=row["Ticker"],
+                            company_id=company.id
+                            if company
+                            else placeholder_company.id,
                             payment_date=datetime.fromisoformat(row["Time"]),
                             year=datetime.fromisoformat(row["Time"]).year,
                             total_payment=row["Total"],
@@ -217,7 +228,10 @@ def sync_dividend_history(year: int):
                 )
                 percentage_increase: float = 0.0
 
-                if previous_year_count and float(previous_year_count.total_dividends) > 0:
+                if (
+                    previous_year_count
+                    and float(previous_year_count.total_dividends) > 0
+                ):
                     previous_total = float(previous_year_count.total_dividends)
                     percentage_increase = (
                         (total_count - previous_total) / previous_total
