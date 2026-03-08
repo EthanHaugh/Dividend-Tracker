@@ -45,6 +45,11 @@ class Company(Base, BaseModel):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+    total_payments: Mapped[Decimal] = mapped_column(
+        Numeric(14, 4),
+        nullable=False,
+        default=Decimal("0"),
+    )
 
     # Relationships
     dividends: Mapped[list["Dividend"]] = relationship(

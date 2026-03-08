@@ -20,6 +20,7 @@ def ensure_placeholder_company():
             quantity=0.0,
             initial_buy_date=datetime(2000, 1, 1).date(),
             average_buy_price=0.0,
+            total_payments=0.0,
         )
         db.session.add(placeholder)
         db.session.commit()

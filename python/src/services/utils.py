@@ -26,18 +26,23 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
                 .filter(Company.name == row["Name"])
                 .one_or_none()
             )
+
             total_count += float(row["Total"])
-            db.session.add(
-                Dividend(
-                    report_id=report_id,
-                    company_id=company.id if company else placeholder_company.id,
-                    payment_date=datetime.fromisoformat(row["Time"]),
-                    year=datetime.fromisoformat(row["Time"]).year,
-                    total_payment=row["Total"],
-                    number_of_shares=row["No. of shares"],
-                    currency=row["Currency (Price / share)"],
-                )
+            dividend = Dividend(
+                report_id=report_id,
+                company_id=company.id if company else placeholder_company.id,
+                payment_date=datetime.fromisoformat(row["Time"]),
+                year=datetime.fromisoformat(row["Time"]).year,
+                total_payment=Decimal(row["Total"]),
+                number_of_shares=row["No. of shares"],
+                currency=row["Currency (Price / share)"],
             )
+
+            db.session.add(dividend)
+            if company:
+                company.total_payments += dividend.total_payment
+            else:
+                placeholder_company.total_payments += dividend.total_payment
 
         previous_year_count = (
             db.session.query(YearlyDividends.total_dividends)

@@ -202,3 +202,21 @@ def sync_dividend_history(year: int):
     process_dividend_csv("downloaded.csv", dividend_history.reportId, year)
 
     os.remove("downloaded.csv")
+
+
+def sync_company_dividends() -> None:
+    """Check that the Company totals match whats in the Dividends table"""
+    companies = db.session.query(Company).all()
+
+    for company in companies:
+        total_payments = (
+            db.session.query(func.sum(Dividend.total_payment).label("total_payment"))
+            .where(Dividend.company_id == company.id)
+            .scalar()
+        )
+
+        print(total_payments)
+
+        company.total_payments = total_payments or Decimal(0)
+
+    db.session.commit()

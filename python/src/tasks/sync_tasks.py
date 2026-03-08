@@ -4,6 +4,7 @@ from functools import wraps
 from celery_app import celery
 from services.sync_service import (
     sync_account_summary,
+    sync_company_dividends,
     sync_dividend_history,
     sync_open_positions,
 )
@@ -32,7 +33,7 @@ def sync_positions_task():
     """
     Fetch currently open positons from Trading212 and update the database
     """
-    
+
     sync_open_positions()
 
 
@@ -59,3 +60,16 @@ def sync_dividend_history_task(year: int | None = None):
         year = datetime.now().year
 
     sync_dividend_history(year)
+
+    sync_company_dividends_task.delay(year)
+
+
+@celery.task
+@run_task
+def sync_company_dividends_task(year: int | None = None):
+    """
+    Check that the Companys tables `total_payment` is
+    up to date with the existing dividends
+    """
+
+    sync_company_dividends()
