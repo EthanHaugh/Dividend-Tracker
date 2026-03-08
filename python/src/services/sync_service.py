@@ -1,4 +1,3 @@
-import csv
 from datetime import datetime
 import os
 import time
@@ -7,6 +6,7 @@ import logging
 
 from sqlalchemy import delete, extract, func
 from sqlalchemy.exc import IntegrityError
+from services.utils import calculate_estimated_deposits, process_dividend_csv
 
 from app.db import db
 from consts.consts import (
@@ -97,10 +97,10 @@ def sync_account_summary() -> None:
     )
 
     account_metadata = db.session.query(AccountMetadata).first()
-    estimated_deposits = (
-        response_data.investments.totalCost
-        - total_dividends
-        - response_data.investments.realizedProfitLoss
+    estimated_deposits = calculate_estimated_deposits(
+        response_data.investments.totalCost,
+        total_dividends,
+        response_data.investments.realizedProfitLoss,
     )
     current_value = response_data.investments.currentValue
 
@@ -118,10 +118,6 @@ def sync_account_summary() -> None:
 
 def sync_dividend_history(year: int):
     """Request Trading 212 to make a new Report and Download it"""
-
-    placeholder_company = (
-        db.session.query(Company).filter(Company.ticker == "UNKNOWN").one()
-    )
 
     payload = {
         "dataIncluded": {
@@ -156,6 +152,8 @@ def sync_dividend_history(year: int):
         return
 
     # Iterate through response to find correct report
+    dividend_history: DividendHistory
+    download_link: str
     for item in response.json():
         if item["reportId"] == int(reportId):
             dividend_history = DividendHistory(
@@ -165,85 +163,41 @@ def sync_dividend_history(year: int):
                 timeTo=item["timeTo"],
             )
 
-            r = requests.get(item["downloadLink"], stream=True)
-            r.raise_for_status()
-            with open("downloaded.csv", "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+            download_link = item["downloadLink"]
 
-            if report := (
-                db.session.query(DividendReport)
-                .filter(extract("year", DividendReport.time_from) == year)
-                .one_or_none()
-            ):
-                db.session.delete(report)
-                stmt = delete(Dividend).where(Dividend.year == year)
-                db.session.execute(stmt)
-                stmt = delete(YearlyDividends).where(YearlyDividends.year == year)
-                db.session.execute(stmt)
-                db.session.commit()
+    if not dividend_history:
+        raise ValueError("Unable to locate report from Trading212")
 
-            try:
-                db.session.add(
-                    DividendReport(
-                        report_id=dividend_history.reportId,
-                        time_from=datetime.fromisoformat(dividend_history.timeFrom),
-                        time_to=datetime.fromisoformat(dividend_history.timeTo),
-                        created_at=datetime.now(),
-                    )
-                )
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
+    response = requests.get(download_link, stream=True)
+    response.raise_for_status()
+    with open("downloaded.csv", "wb") as f:
+        f.write(response.content)
 
-            with open("downloaded.csv", "r") as file:
-                reader = csv.DictReader(file)
-                total_count: float = 0.0
-                for row in reader:
-                    company = (
-                        db.session.query(Company)
-                        .filter(Company.name == row["Name"])
-                        .one_or_none()
-                    )
-                    total_count += float(row["Total"])
-                    db.session.add(
-                        Dividend(
-                            report_id=dividend_history.reportId,
-                            company_id=company.id
-                            if company
-                            else placeholder_company.id,
-                            payment_date=datetime.fromisoformat(row["Time"]),
-                            year=datetime.fromisoformat(row["Time"]).year,
-                            total_payment=row["Total"],
-                            number_of_shares=row["No. of shares"],
-                            currency=row["Currency (Price / share)"],
-                        )
-                    )
+    if report := (
+        db.session.query(DividendReport)
+        .filter(extract("year", DividendReport.time_from) == year)
+        .one_or_none()
+    ):
+        db.session.delete(report)
+        stmt = delete(Dividend).where(Dividend.year == year)
+        db.session.execute(stmt)
+        stmt = delete(YearlyDividends).where(YearlyDividends.year == year)
+        db.session.execute(stmt)
+        db.session.commit()
 
-                previous_year_count = (
-                    db.session.query(YearlyDividends.total_dividends)
-                    .filter(YearlyDividends.year == year - 1)
-                    .one_or_none()
-                )
-                percentage_increase: float = 0.0
+    try:
+        db.session.add(
+            DividendReport(
+                report_id=dividend_history.reportId,
+                time_from=datetime.fromisoformat(dividend_history.timeFrom),
+                time_to=datetime.fromisoformat(dividend_history.timeTo),
+                created_at=datetime.now(),
+            )
+        )
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
 
-                if (
-                    previous_year_count
-                    and float(previous_year_count.total_dividends) > 0
-                ):
-                    previous_total = float(previous_year_count.total_dividends)
-                    percentage_increase = (
-                        (total_count - previous_total) / previous_total
-                    ) * 100
+    process_dividend_csv("downloaded.csv", dividend_history.reportId, year)
 
-                db.session.add(
-                    YearlyDividends(
-                        year=year,
-                        total_dividends=total_count,
-                        yoy_increase=percentage_increase,
-                    )
-                )
-                db.session.commit()
-
-            os.remove("downloaded.csv")
+    os.remove("downloaded.csv")
