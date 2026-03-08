@@ -7,6 +7,7 @@ export interface AccountCashResponse {
 export interface PieChartResponse {
   data: {
     ticker: string;
+    name: string;
     total_payment: number;
   }[];
   total_count: number;

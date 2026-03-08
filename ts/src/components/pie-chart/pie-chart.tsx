@@ -11,20 +11,20 @@ ChartJS.register(ArcElement, Tooltip, Title);
 function generateColorPalette(count: number): string[] {
   const colors: string[] = [];
   const baseHue = 270; // TODO: Get someone who isn't colour blind to check lol
-  
+
   for (let i = 0; i < count; i++) {
     // Vary saturation and lightness to get different shades 
     const saturation = 70 + (i % 2) * 100; // 70%, 80%, 90%
     const lightness = 40 + Math.floor(i / 2) * 3; // 40%, 48%, 56%, etc.
     colors.push(`hsl(${baseHue}, ${saturation}%, ${lightness}%)`);
   }
-  
+
   return colors;
 }
 
 export function DonutChart() {
   const { data, isLoading } = useGetPieChartData();
-  const labels = data?.data.map((item) => item.ticker);
+  const labels = data?.data.map((item) => item.name);
   const values = data?.data.map((item) => item.total_payment);
 
   const chartData = {
