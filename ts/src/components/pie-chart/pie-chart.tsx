@@ -4,10 +4,8 @@ import { useGetPieChartData } from "../../hooks/api.hooks";
 import styles from "./pie-chart.module.css";
 import { Flex, Spin } from "antd";
 
-// Register chart components
 ChartJS.register(ArcElement, Tooltip, Title);
 
-// Generate a color palette dynamically
 function generateColorPalette(count: number): string[] {
   const colors: string[] = [];
   const baseHue = 270; // TODO: Get someone who isn't colour blind to check lol
@@ -26,6 +24,7 @@ export function DonutChart() {
   const { data, isLoading } = useGetPieChartData();
   const labels = data?.data.map((item) => item.name);
   const values = data?.data.map((item) => item.total_payment);
+  const percentages = data?.data.map((item) => item.percentage);
 
   const chartData = {
     labels,
@@ -53,6 +52,19 @@ export function DonutChart() {
         display: true,
         text: "Total Dividends by Ticker",
       },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            const value = context.parsed || 0;
+            const percentage = percentages?.[context.dataIndex] || 0;
+
+            return [
+              `Amount: £${Number(value).toFixed(2)}`,
+              `Percentage: ${percentage.toFixed(2)}%`
+            ];
+          }
+        }
+      }
     },
   };
 

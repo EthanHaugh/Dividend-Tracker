@@ -9,6 +9,7 @@ export interface PieChartResponse {
     ticker: string;
     name: string;
     total_payment: number;
+    percentage: number;
   }[];
   total_count: number;
 }

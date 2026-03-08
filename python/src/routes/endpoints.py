@@ -85,7 +85,7 @@ def get_account_cash():
 
 @dividends_bp.route("/pie-chart", methods=["GET"])
 def get_pie_chart_data():
-    """List total dividends by company for the pie chart."""
+    """List total dividends by company for the pie chart with percentage contribution."""
     query = (
         db.session.query(
             Dividend.company_id,
@@ -97,9 +97,29 @@ def get_pie_chart_data():
         .group_by(Dividend.company_id)
         .order_by(func.sum(Dividend.total_payment).desc())
     )
+
+    results = query.all()
+
+    total_dividends = sum(float(r.total_payment) for r in results) if results else 0
+
+    data = []
+    for r in results:
+        item = r._asdict()
+        percentage = (
+            (float(r.total_payment) / total_dividends * 100)
+            if total_dividends > 0
+            else 0
+        )
+        item["percentage"] = round(percentage, 2)
+        data.append(item)
+
     return (
         jsonify(
-            {"data": [d._asdict() for d in query.all()], "total_count": query.count()}
+            {
+                "data": data,
+                "total_count": len(data),
+                "total_dividends": float(total_dividends),
+            }
         ),
         200,
     )
