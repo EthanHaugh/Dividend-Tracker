@@ -130,10 +130,12 @@ export function useListCompanyTotals(
   page: number,
   pageSize: number,
   search: string,
-  filters: string[]
+  filters: string[],
+  sortBy?: string,
+  sortDirection?: string,
 ) {
-  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}`;
-  return useFetch<ListDividendsResponse>(url, [page, pageSize, search, filters]);
+  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}${sortBy ? `&sort_by=${sortBy}`: ''}${sortDirection ? `&sort_direction=${sortDirection}`: ''}`;
+  return useFetch<ListDividendsResponse>(url, [page, pageSize, search, filters, sortBy, sortDirection]);
 }
 
 export function useListCompanyDividends(

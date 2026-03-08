@@ -14,8 +14,8 @@ dividends_bp = Blueprint("dividends", __name__)
 # Default type for sort_direction, if a passed value is not of type SortDirection
 # the flask_request.args.get() with return the default value
 class SortDirection(Enum):
-    ASCENDING = "asc"
-    DESCENDING = "desc"
+    ASCENDING = "ascend"
+    DESCENDING = "descend"
 
 
 def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:

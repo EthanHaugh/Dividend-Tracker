@@ -14,10 +14,13 @@ export function DividendsTable() {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [filters, setFilters] = useState<string[]>([])
+  const [sortBy, setSortBy] = useState<string | undefined>()
+  const [sortDirection, setSortDirection] = useState<string | undefined>()
+
   const [tickers, setTickers] = useState<string[]>([])
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search, filters)
+  const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search, filters, sortBy, sortDirection)
 
 
   useEffect(() => {
@@ -37,18 +40,27 @@ export function DividendsTable() {
     };
   }, [searchInput]);
 
+  const handleTableChange: TableProps<DividendPayment>['onChange'] = (pagination, filters, sorter) => {
+    if (sorter) {
+      setSortBy(Array.isArray(sorter) ? undefined : sorter.columnKey as string)
+      setSortDirection(Array.isArray(sorter) ? undefined : sorter.order as string)
+    }
+  }
+
   const columns: ColumnsType<DividendPayment> = [
     {
       title: "Company",
       dataIndex: "name",
       key: "name",
       width: "80%",
+      sorter: true,
     },
     {
       title: "Total Payment",
       dataIndex: "total_payment",
       render: (payment: string) => <span>£ {Number(payment).toFixed(2)}</span>,
-      key: "total_payment",
+      key: "total_payments",
+      sorter: true,
     },
   ];
 
@@ -81,6 +93,7 @@ export function DividendsTable() {
         rowKey={(row) => row.ticker}
         loading={companyTotalsLoading}
         scroll={{ y: 400 }}
+        onChange={handleTableChange}
         pagination={{
           current: page,
           pageSize: pageSize,
