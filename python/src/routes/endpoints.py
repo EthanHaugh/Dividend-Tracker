@@ -112,12 +112,12 @@ def list_company_totals():
     page_size = flask_request.args.get("page_size", default=10, type=int)
     search = flask_request.args.get("search", default=None, type=str)
     filters = flask_request.args.get("filters", default=None, type=str)
-    sort_by = flask_request.args.get("sort_by", default="ticker", type=str)
+    sort_by = flask_request.args.get("sort_by", default="total_payments", type=str)
     sort_direction = flask_request.args.get(
         "sort_direction", default=SortDirection.DESCENDING, type=SortDirection
     )
 
-    allowed_sort_fields = ["ticker", "total_payment"]
+    allowed_sort_fields = ["name", "total_payments"]
 
     if not _vaidate_sort_by(sort_by, allowed_sort_fields):
         return jsonify(
@@ -187,7 +187,13 @@ def list_company_dividends():
 
     offset = (page - 1) * page_size
 
-    query = db.session.query(Dividend).join(Company).filter(Company.ticker == ticker)
+    query = (
+        db.session.query(Dividend)
+        .join(Company)
+        .where(Dividend.company_id == Company.id)
+        .filter(Company.ticker == ticker)
+        .order_by(Dividend.payment_date.desc())
+    )
     total_count = query.count()
 
     query = _sort_query(query, Dividend, sort_by, sort_direction)
@@ -196,7 +202,7 @@ def list_company_dividends():
     return (
         jsonify(
             {
-                "data": [d.asdict() for d in query],
+                "data": [d.asdict() for d in query.all()],
                 "page": page,
                 "page_size": page_size,
                 "total_count": total_count,

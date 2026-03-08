@@ -105,6 +105,22 @@ class Dividend(Base, BaseModel):
         "DividendReport", back_populates="dividends"
     )
 
+    def asdict(self) -> dict:
+        """Convert model to dictionary including company name and ticker."""
+        return {
+            "dividend_id": self.dividend_id,
+            "report_id": self.report_id,
+            "company_id": self.company_id,
+            "company_name": self.company.name if self.company else None,
+            "ticker": self.company.ticker if self.company else None,
+            "payment_date": self.payment_date,
+            "year": self.year,
+            "total_payment": self.total_payment,
+            "number_of_shares": self.number_of_shares,
+            "currency": self.currency,
+            "created_at": self.created_at,
+        }
+
 
 class YearlyDividends(Base, BaseModel):
     """
