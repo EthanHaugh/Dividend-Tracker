@@ -215,8 +215,6 @@ def sync_company_dividends() -> None:
             .scalar()
         )
 
-        print(total_payments)
-
         company.total_payments = total_payments or Decimal(0)
 
     db.session.commit()

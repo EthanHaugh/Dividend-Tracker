@@ -63,7 +63,7 @@ export function DividendsTable() {
             loading={tickersLoading}
             maxTagCount={1}
             showSearch
-            options={availableTickersData?.map((ticker) => { return { value: ticker, label: ticker } })}
+            options={availableTickersData?.map((item) => { return { value: item.ticker, label: item.name } })}
             onOpenChange={handleDropdownSelect}
             onSelect={handleSelect}
             onClear={handleSelectClear}

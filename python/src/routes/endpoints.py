@@ -2,7 +2,7 @@ from enum import Enum
 from flask_sqlalchemy.model import Model
 from flask import Blueprint, jsonify
 from flask import request as flask_request
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Query
 
 from app import db
@@ -143,10 +143,15 @@ def list_company_totals():
     query = _sort_query(query, Company, sort_by, sort_direction)
 
     if filters:
-        query = query.filter(Dividend.ticker.in_(filters))
+        query = query.filter(Company.ticker.in_(filters))
+        total_count = query.count()
 
     if search:
-        query = query.filter(Dividend.ticker.ilike(f"%{search}%"))
+        query = query.filter(Company.ticker.ilike(f"%{search}%"))
+        query = query.filter(
+            or_(Company.ticker.ilike(f"%{search}%"), Company.name.ilike(f"%{search}%"))
+        )
+        total_count = query.count()
 
     query = query.offset(offset).limit(page_size)
     return (

@@ -40,6 +40,15 @@ export interface ListCompanyDividendsResponse {
   page_size: number;
 }
 
+export interface ListAvailableTickersResponse {
+  data: AvailableTicker[]
+}
+
+interface AvailableTicker {
+  ticker: string;
+  name: string;
+}
+
 export interface Dividend {
   created_at: string;
   dividend_id: number;

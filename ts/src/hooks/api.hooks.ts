@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   AccountCashResponse,
+  ListAvailableTickersResponse,
   ListCompanyDividendsResponse,
   ListDividendsResponse,
   PieChartResponse,
@@ -156,7 +157,7 @@ export function useUpdateCurrentYearDividends(onSuccess?: () => void) {
 }
 
 export function useListAvailableTickers() {
-  const { data: fullData, ...rest } = useFetch<{ data: string[] }>(
+  const { data: fullData, ...rest } = useFetch<ListAvailableTickersResponse>(
     `${BASE_URL}/list-available-tickers`
   );
   
