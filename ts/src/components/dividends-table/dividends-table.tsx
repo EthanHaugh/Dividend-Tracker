@@ -2,7 +2,7 @@ import { Col, GetProp, Input, Row, Select, Table, TableProps } from "antd";
 import styles from "./dividends-table.module.css";
 import { useListAvailableTickers, useListCompanyTotals } from "../../hooks/api.hooks";
 import { DividendPayment } from "../../models/models";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DividendsTableRowExpand } from "../dividends-table-row-expand/dividends-table-row-expand";
 
 type ColumnsType<T extends object> = GetProp<TableProps<T>, "columns">;
@@ -11,11 +11,30 @@ export function DividendsTable() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>(""); // Immediate input state
   const [filters, setFilters] = useState<string[]>([])
   const [tickers, setTickers] = useState<string[]>([])
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search, filters)
   const { data: availableTickersData, isLoading: tickersLoading } = useListAvailableTickers();
+
+  useEffect(() => {
+    // Debounce to ensure calls are not made on every key stroke
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setSearch(searchInput);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchInput]);
 
   const columns: ColumnsType<DividendPayment> = [
     {
@@ -33,7 +52,7 @@ export function DividendsTable() {
   ];
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
+    setSearchInput(value);
   };
 
   const handleDropdownSelect = (open: boolean) => {
@@ -73,6 +92,7 @@ export function DividendsTable() {
           <Input.Search
             placeholder="Search by ticker"
             className={styles.search}
+            value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </Col>

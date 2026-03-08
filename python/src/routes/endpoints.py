@@ -147,7 +147,6 @@ def list_company_totals():
         total_count = query.count()
 
     if search:
-        query = query.filter(Company.ticker.ilike(f"%{search}%"))
         query = query.filter(
             or_(Company.ticker.ilike(f"%{search}%"), Company.name.ilike(f"%{search}%"))
         )
