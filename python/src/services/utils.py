@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from decimal import Decimal
 
 from app.db import db
 from models.models import Company, Dividend, YearlyDividends
@@ -7,8 +8,8 @@ from models.models import Company, Dividend, YearlyDividends
 
 def calculate_estimated_deposits(
     total_cost: float, total_dividends: float, realised_profit_loss: float
-) -> float:
-    return total_cost - total_dividends - realised_profit_loss
+) -> Decimal:
+    return Decimal(str(total_cost - total_dividends - realised_profit_loss))
 
 
 def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:

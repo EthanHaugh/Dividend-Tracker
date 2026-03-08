@@ -35,12 +35,10 @@ class Company(Base, BaseModel):
     name: Mapped[str] = mapped_column(
         String(100), unique=True, nullable=False, index=True
     )
-    quantity: Mapped[float] = mapped_column(
-        nullable=False
-    )  # Share quantity, can be fractional
+    quantity: Mapped[float] = mapped_column(nullable=False)
     initial_buy_date: Mapped[datetime] = mapped_column(Date, nullable=False)
     average_buy_price: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4),  # Up to 99,999,999.9999
+        Numeric(12, 4),
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

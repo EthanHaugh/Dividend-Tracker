@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 import os
 import time
 import requests
@@ -102,7 +103,7 @@ def sync_account_summary() -> None:
         total_dividends,
         response_data.investments.realizedProfitLoss,
     )
-    current_value = response_data.investments.currentValue
+    current_value = Decimal(str(response_data.investments.currentValue))
 
     if not account_metadata:
         account_metadata = AccountMetadata(
