@@ -21,6 +21,7 @@ export interface ListDividendsResponse {
 
 export interface DividendPayment {
   ticker: string;
+  name: string;
   total_payment: number;
 }
 

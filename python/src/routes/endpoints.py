@@ -131,7 +131,9 @@ def list_company_totals():
 
     query = (
         db.session.query(
-            Company.ticker, func.sum(Dividend.total_payment).label("total_payment")
+            Company.ticker,
+            Company.name,
+            func.sum(Dividend.total_payment).label("total_payment"),
         )
         .join(Dividend)
         .group_by(Company.ticker)

@@ -19,10 +19,10 @@ export function DividendsTable() {
 
   const columns: ColumnsType<DividendPayment> = [
     {
-      title: "Ticker",
-      dataIndex: "ticker",
-      key: "ticker",
-      width: 75,
+      title: "Company",
+      dataIndex: "name",
+      key: "name",
+      width: "80%",
     },
     {
       title: "Total Payment",
