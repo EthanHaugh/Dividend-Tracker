@@ -1,126 +1,149 @@
+from datetime import datetime
+from decimal import Decimal
+
 from sqlalchemy import (
-    Column,
-    Float,
-    String,
     Integer,
+    String,
     Numeric,
     Date,
     DateTime,
     ForeignKey,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db import db
+from app.db import Base
 
 
-class Company(db.Model):
+class BaseModel:
+    """Mixin for common model functionality."""
+
+    def asdict(self):
+        """Convert model to dictionary."""
+        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+
+
+class Company(Base, BaseModel):
+    """
+    Represents a company/stock held in the portfolio.
+    """
+
     __tablename__ = "companies"
 
-    id = Column(Integer, primary_key=True)
-    ticker = Column(String(20), unique=True, nullable=False)
-    name = Column(String(100), unique=True, nullable=False, index=True)
-    quantity = Column(Float, nullable=False)
-    initial_buy_date = Column(Date, nullable=False)
-    average_buy_price = Column(Float, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    def asdict(self):
-        return {
-            "id": self.id,
-            "trading212_ticker": self.ticker,
-            "name": self.name,
-            "quantity": self.quantity,
-            "initial_buy_date": self.initial_buy_date,
-            "average_buy_price": self.average_buy_price,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
-
-
-class Dividend(db.Model):
-    __tablename__ = "dividends"
-
-    dividend_id = Column(Integer, primary_key=True)
-    report_id = Column(
-        Integer, ForeignKey("dividend_reports.report_id"), nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
     )
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    payment_date = Column(Date, nullable=False)
-    year = Column(Integer, nullable=False)
-    total_payment = Column(Numeric(10, 4), nullable=False)
-    number_of_shares = Column(Float, nullable=False)
-    currency = Column(String(10))
-    created_at = Column(DateTime, server_default=func.now())
+    quantity: Mapped[float] = mapped_column(
+        nullable=False
+    )  # Share quantity, can be fractional
+    initial_buy_date: Mapped[datetime] = mapped_column(Date, nullable=False)
+    average_buy_price: Mapped[Decimal] = mapped_column(
+        Numeric(12, 4),  # Up to 99,999,999.9999
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
-    company = relationship("Company", backref="dividends")
-
-    def asdict(self):
-        return {
-            "dividend_id": self.dividend_id,
-            "report_id": self.report_id,
-            "company_id": self.company_id,
-            "company_name": self.company.name if self.company else None,
-            "ticker": self.company.ticker if self.company else None,
-            "payment_date": self.payment_date,
-            "year": self.year,
-            "total_payment": self.total_payment,
-            "number_of_shares": self.number_of_shares,
-            "currency": self.currency,
-            "created_at": self.created_at,
-        }
+    # Relationships
+    dividends: Mapped[list["Dividend"]] = relationship(
+        "Dividend", back_populates="company", cascade="all, delete-orphan"
+    )
 
 
-class DividendReport(db.Model):
+class DividendReport(Base, BaseModel):
+    """
+    Represents a dividend reporting period.
+
+    Groups dividend payments within a specific date range.
+    """
+
     __tablename__ = "dividend_reports"
 
-    report_id = Column(Integer, primary_key=True)
-    time_from = Column(Date, nullable=False)
-    time_to = Column(Date, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+    report_id: Mapped[int] = mapped_column(primary_key=True)
+    time_from: Mapped[datetime] = mapped_column(Date, nullable=False)
+    time_to: Mapped[datetime] = mapped_column(Date, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
-    def asdict(self):
-        return {
-            "report_id": self.report_id,
-            "time_from": self.time_from,
-            "time_to": self.time_to,
-            "created_at": self.created_at,
-        }
+    # Relationships
+    dividends: Mapped[list["Dividend"]] = relationship(
+        "Dividend", back_populates="report", cascade="all, delete-orphan"
+    )
 
 
-class YearlyDividends(db.Model):
+class Dividend(Base, BaseModel):
+    """
+    Represents a single dividend payment.
+
+    Tracks individual dividend payments per company,
+    linked to both a Company and DividendReport.
+    """
+
+    __tablename__ = "dividends"
+
+    dividend_id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("dividend_reports.report_id"), nullable=False
+    )
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    payment_date: Mapped[datetime] = mapped_column(Date, nullable=False)
+    year: Mapped[int] = mapped_column(nullable=False)
+    total_payment: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    number_of_shares: Mapped[float] = mapped_column(nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="USD", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    # Relationships
+    company: Mapped["Company"] = relationship("Company", back_populates="dividends")
+    report: Mapped["DividendReport"] = relationship(
+        "DividendReport", back_populates="dividends"
+    )
+
+
+class YearlyDividends(Base, BaseModel):
+    """
+    Aggregated dividend data per year.
+
+    Stores total dividends received in a given year
+    and year-over-year growth metrics.
+    """
+
     __tablename__ = "yearly_dividends"
 
-    id = Column(Integer, primary_key=True)
-    year = Column(Integer, nullable=False)
-    total_dividends: Mapped[float] = mapped_column(
-        Float, server_default="0.0", nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_dividends: Mapped[Decimal] = mapped_column(
+        Numeric(12, 4), server_default="0.0", nullable=False
     )
-    created_at = Column(DateTime, server_default=func.now())
-    yoy_increase: Mapped[float] = mapped_column(
-        Float, server_default="0.0", nullable=False
+    yoy_increase: Mapped[Decimal] = mapped_column(
+        Numeric(8, 4),
+        server_default="0.0",
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    def asdict(self):
-        return {
-            "id": self.id,
-            "year": self.year,
-            "total_dividends": self.total_dividends,
-            "yoy_increase": self.yoy_increase,
-            "created_at": self.created_at,
-        }
+    __table_args__ = (UniqueConstraint("year", name="uq_yearly_dividends_year"),)
 
 
-class AccountMetadata(db.Model):
+class AccountMetadata(Base, BaseModel):
+    """
+    Portfolio-level metadata and metrics.
+
+    Tracks overall account value and estimated total deposits
+    for performance calculation purposes.
+    """
+
     __tablename__ = "account_metadata"
 
-    id = Column(Integer, primary_key=True)
-    account_value: Mapped[float] = mapped_column(Float, nullable=False)
-    estimated_deposits: Mapped[float] = mapped_column(Float, nullable=False)
-
-    def asdict(self):
-        return {
-            "id": self.id,
-            "account_value": self.account_value,
-            "estimated_deposits": self.estimated_deposits,
-        }
+    id: Mapped[int] = mapped_column(primary_key=True)
+    account_value: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    estimated_deposits: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

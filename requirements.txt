@@ -13,7 +13,6 @@ click-repl==0.3.0
 colorama==0.4.6
 Flask==3.1.0
 flask-cors==6.0.2
-Flask-Executor==1.0.0
 Flask-Migrate==4.1.0
 Flask-Pydantic==0.13.1
 Flask-SQLAlchemy==3.1.1
