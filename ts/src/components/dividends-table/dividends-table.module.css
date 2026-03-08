@@ -1,8 +1,23 @@
 .search {
   max-width: 250px;
   min-width: 250px;
+  max-height: 32px;
+  min-height: 32px;
+}
+
+.tickerSelect {
   max-height: 30px;
   min-height: 30px;
+  min-width: 90px;
+}
+
+.search :global(.ant-select-selector) {
+  max-height: 30px;
+  overflow: hidden;
+}
+
+:global(.ant-select-dropdown) {
+  min-width: 250px !important;
 }
 
 .row {
@@ -12,4 +27,4 @@
 
 .table {
   margin-top: 8px;
-}
+} 

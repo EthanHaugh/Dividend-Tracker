@@ -1,9 +1,10 @@
-import { Col, GetProp, Input, Row, Select, Table, TableProps } from "antd";
+import { GetProp, Table, TableProps } from "antd";
 import styles from "./dividends-table.module.css";
-import { useListAvailableTickers, useListCompanyTotals } from "../../hooks/api.hooks";
+import { useListCompanyTotals } from "../../hooks/api.hooks";
 import { DividendPayment } from "../../models/models";
 import { useState, useEffect, useRef } from "react";
 import { DividendsTableRowExpand } from "../dividends-table-row-expand/dividends-table-row-expand";
+import { DividendsTableHeader } from "./dividends-table-header";
 
 type ColumnsType<T extends object> = GetProp<TableProps<T>, "columns">;
 
@@ -11,13 +12,13 @@ export function DividendsTable() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
-  const [searchInput, setSearchInput] = useState<string>(""); // Immediate input state
+  const [searchInput, setSearchInput] = useState<string>("");
   const [filters, setFilters] = useState<string[]>([])
   const [tickers, setTickers] = useState<string[]>([])
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: companyTotalsData, isLoading: companyTotalsLoading } = useListCompanyTotals(page, pageSize, search, filters)
-  const { data: availableTickersData, isLoading: tickersLoading } = useListAvailableTickers();
+
 
   useEffect(() => {
     // Debounce to ensure calls are not made on every key stroke
@@ -72,55 +73,29 @@ export function DividendsTable() {
 
   return (
     <>
-      <Row justify={"end"} className={styles.row} gutter={5}>
-        <Col>
-          <Select
-            mode="multiple"
-            className={styles.search}
-            placeholder="Please select"
-            allowClear
-            loading={tickersLoading}
-            maxTagCount={1}
-            showSearch
-            options={availableTickersData?.map((item) => { return { value: item.ticker, label: item.name } })}
-            onOpenChange={handleDropdownSelect}
-            onSelect={handleSelect}
-            onClear={handleSelectClear}
-          />
-        </Col>
-        <Col>
-          <Input.Search
-            placeholder="Search by ticker"
-            className={styles.search}
-            value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Table
-          dataSource={companyTotalsData?.data}
-          columns={columns}
-          className={styles.table}
-          rowKey={(row) => row.ticker}
-          loading={companyTotalsLoading}
-          scroll={{ y: 400 }}
-          pagination={{
-            current: page,
-            pageSize: pageSize,
-            total: companyTotalsData?.total_count,
-            onChange: (page, pageSize) => {
-              setPage(page);
-              setPageSize(pageSize);
-            },
-          }}
-          expandable={{
-            expandedRowRender: (record) => (
-              <DividendsTableRowExpand ticker={record.ticker} />
-            ),
-          }}
-        />
-      </Row>
+      <DividendsTableHeader isLoading={companyTotalsLoading} total_count={companyTotalsData?.total_count || 0} selectOnOpen={handleDropdownSelect} selectOnSelect={handleSelect} searchOnChange={handleSearchChange} selectOnClear={handleSelectClear} />
+      <Table
+        dataSource={companyTotalsData?.data}
+        columns={columns}
+        className={styles.table}
+        rowKey={(row) => row.ticker}
+        loading={companyTotalsLoading}
+        scroll={{ y: 400 }}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: companyTotalsData?.total_count,
+          onChange: (page, pageSize) => {
+            setPage(page);
+            setPageSize(pageSize);
+          },
+        }}
+        expandable={{
+          expandedRowRender: (record) => (
+            <DividendsTableRowExpand ticker={record.ticker} />
+          ),
+        }}
+      />
     </>
   );
 }

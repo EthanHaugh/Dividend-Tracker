@@ -33,7 +33,6 @@ export function InfoCard({
               className={styles.statistic}
             />
             <Typography.Text type="secondary" className={styles.footer}>
-              {/* <div>{footerTitle}{footerTitle ? ': ' : ''}{footerValue}{footerIcon && footerIcon}</div> */}
               {footerTitle && <div className={styles.footerItem}>{footerTitle}:</div>}
               {footerValue && <div className={styles.footerItem}>{footerValue}</div>}
               {footerIcon && <div className={styles.footerItem}>{footerIcon}</div>}

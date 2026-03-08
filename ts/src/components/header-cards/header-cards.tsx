@@ -24,8 +24,8 @@ export function HeaderCards() {
     useGetAccountCash();
 
   return (
-    <Row justify={"space-between"} gutter={24}>
-      <Col span={6}>
+    <Row justify={"space-between"}>
+      <Col span={5}>
         <InfoCard
           title="Total Dividends"
           value={`£ ${totalDividends?.total_dividends.toLocaleString(undefined, {
@@ -36,7 +36,7 @@ export function HeaderCards() {
           suffix={<BankOutlined />}
         />
       </Col>
-      <Col span={6}>
+      <Col span={5}>
         <InfoCard
           title="Prev. Year Avg. Monthly"
           value={`£ ${(previousYearData
@@ -56,7 +56,7 @@ export function HeaderCards() {
           suffix={<CalendarOutlined />}
         />
       </Col>
-      <Col span={6}>
+      <Col span={5}>
         <InfoCard
           title="Portfolio Value"
           value={`£ ${accountCash?.account_value.toLocaleString(undefined, {
@@ -80,7 +80,7 @@ export function HeaderCards() {
           suffix={<AreaChartOutlined />}
         />
       </Col>
-      <Col span={6}>
+      <Col span={5}>
         <InfoCard
           title="Yield"
           value={`~${accountCash && previousYearData
