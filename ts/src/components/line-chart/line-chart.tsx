@@ -1,89 +1,55 @@
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  Title,
-  TooltipItem,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+import { LineChart } from "@mui/x-charts/LineChart";
 import { useGetYearlyDividends } from "../../hooks/api.hooks";
-import { Spin } from "antd";
+import { CircularProgress, GlobalStyles } from "@mui/material";
 
-// Register necessary Chart.js components
-ChartJS.register(
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  Title
+const AXIS_COLOUR = "rgba(255,255,255,0.5)"
+
+const tooltipStyles = (
+  <GlobalStyles styles={{
+    ".MuiChartsTooltip-labelCell": { display: "none !important" },
+  }} />
 );
 
 const DividendsLineChart = () => {
   const { data, isLoading } = useGetYearlyDividends();
 
-  const labels = data?.map((item) => item.year);
-  const dataPoints = data?.map((item) => item.total_dividends);
+  const years = data?.map((item) => item.year.toString()) ?? [];
+  const dataPoints = data?.map((item) => item.total_dividends) ?? [];
 
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        label: "Total Dividends",
-        data: dataPoints,
-        fill: false,
-        borderColor: "rgba(0, 89, 255, 1)", // pinkish red
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
-        tension: 0.3,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
+  if (isLoading || !data || data.length === 0) {
+    return <CircularProgress size={48} />;
+  }
 
-  const options = {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: "Dividends Over the Years",
-      },
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        displayColors: false,
-        callbacks: {
-          label: function (context: TooltipItem<"line">) {
-            const value = context.parsed.y;
-            return `£ ${value.toFixed(2)}`;
-          },
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: false,
-        title: {
-          display: true,
-          text: "Dividends ($)",
-        },
-      },
-      x: {
-        title: {
-          display: true,
-          text: "Year",
-        },
-      },
-    },
-  };
-
-  return isLoading ? <Spin /> : <Line data={chartData} options={options} />;
+  return (
+    <>
+      {tooltipStyles}
+      <LineChart
+        key={years.join(",")}
+        xAxis={[{
+          data: years,
+          label: "Year",
+          scaleType: "point",
+          disableLine: true,
+          disableTicks: true,
+          tickLabelStyle: { fill: AXIS_COLOUR },
+          labelStyle: { fill: AXIS_COLOUR },
+        }]}
+        yAxis={[{
+          label: "Dividends (£)",
+          tickLabelStyle: { fill: AXIS_COLOUR },
+          labelStyle: { fill: AXIS_COLOUR },
+        }]}
+        series={[{
+          data: dataPoints,
+          label: "Total Dividends",
+          valueFormatter: (value) => `£${Number(value).toFixed(2)}`,
+        }]}
+        width={600}
+        height={450}
+        hideLegend
+      />
+    </>
+  );
 };
 
 export default DividendsLineChart;
