@@ -1,7 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
 import os
-import time
 import requests
 import logging
 
@@ -117,9 +116,11 @@ def sync_account_summary() -> None:
     db.session.commit()
 
 
-def sync_dividend_history(year: int):
-    """Request Trading 212 to make a new Report and Download it"""
-
+def request_dividend_report(year: int) -> int:
+    """
+    POST to Trading 212 to generate a dividend report.
+    Returns the reportId for the follow-up download task.
+    """
     payload = {
         "dataIncluded": {
             "includeDividends": True,
@@ -130,60 +131,67 @@ def sync_dividend_history(year: int):
         "timeFrom": f"{year}-01-01T00:00:00Z",
         "timeTo": f"{end_of_or_today(year)}T00:00:00Z",
     }
+
     response = requests.post(GENERATE_REPORT_URL, headers=REQUEST_HEADERS, json=payload)
-
     if response.status_code != 200:
-        logger.error(
-            f"Unable to request report from Trading212 for {year}: {response.json()}"
+        raise RuntimeError(
+            f"Failed to request Trading 212 report for {year}: {response.json()}"
         )
-        return
 
-    reportId = response.json().get("reportId")
+    report_id = response.json().get("reportId")
+    if not report_id:
+        raise ValueError(f"Trading 212 response missing reportId for year {year}")
 
-    # Allow Trading 212 to process the request
-    # Can't use a loop here to continue pinging T212 due to rate limiting
-    time.sleep(20)
+    logger.info(f"Report requested successfully for {year}, reportId={report_id}")
+    return int(report_id)
 
-    # Download report from Trading 212 using above response ID
+
+def download_and_process_report(report_id: int, year: int) -> None:
+    """
+    Retrieve the completed report from Trading 212, download the CSV,
+    persist it to the database, then clean up.
+    """
     response = requests.get(RETRIEVE_REPORT_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
-        logger.error(
-            f"Report for {year} requested successfully, though retrevial from Trading212 has failed: {response.json()}"
+        raise RuntimeError(
+            f"Failed to retrieve report list from Trading 212: {response.json()}"
         )
-        return
 
-    # Iterate through response to find correct report
-    dividend_history: DividendHistory
-    download_link: str
+    # Find the matching report in the response list
+    dividend_history: DividendHistory | None = None
     for item in response.json():
-        if item["reportId"] == int(reportId):
+        if item["reportId"] == report_id:
             dividend_history = DividendHistory(
                 reportId=item["reportId"],
                 downloadLink=item["downloadLink"],
                 timeFrom=item["timeFrom"],
                 timeTo=item["timeTo"],
             )
+            break
 
-            download_link = item["downloadLink"]
+    if dividend_history is None:
+        raise ValueError(
+            f"Report {report_id} not found in Trading 212 report list — "
+            "it may still be processing. Consider retrying."
+        )
 
-    if not dividend_history:
-        raise ValueError("Unable to locate report from Trading212")
+    # Download the CSV
+    csv_response = requests.get(dividend_history.downloadLink, stream=True)
+    csv_response.raise_for_status()
 
-    response = requests.get(download_link, stream=True)
-    response.raise_for_status()
-    with open("downloaded.csv", "wb") as f:
-        f.write(response.content)
+    tmp_path = f"dividend_{report_id}_{year}.csv"
+    with open(tmp_path, "wb") as f:
+        f.write(csv_response.content)
 
-    if report := (
+    # Clear out any existing data for this year before re-inserting
+    if existing_report := (
         db.session.query(DividendReport)
         .filter(extract("year", DividendReport.time_from) == year)
         .one_or_none()
     ):
-        db.session.delete(report)
-        stmt = delete(Dividend).where(Dividend.year == year)
-        db.session.execute(stmt)
-        stmt = delete(YearlyDividends).where(YearlyDividends.year == year)
-        db.session.execute(stmt)
+        db.session.delete(existing_report)
+        db.session.execute(delete(Dividend).where(Dividend.year == year))
+        db.session.execute(delete(YearlyDividends).where(YearlyDividends.year == year))
         db.session.commit()
 
     try:
@@ -198,10 +206,12 @@ def sync_dividend_history(year: int):
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
+        logger.warning(f"DividendReport {report_id} already exists — skipping insert.")
 
-    process_dividend_csv("downloaded.csv", dividend_history.reportId, year)
-
-    os.remove("downloaded.csv")
+    try:
+        process_dividend_csv(tmp_path, dividend_history.reportId, year)
+    finally:
+        os.remove(tmp_path)
 
 
 def sync_company_dividends() -> None:

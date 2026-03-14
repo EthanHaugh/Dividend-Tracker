@@ -3,9 +3,10 @@ from datetime import datetime
 from functools import wraps
 from celery_app import celery
 from services.sync_service import (
+    download_and_process_report,
+    request_dividend_report,
     sync_account_summary,
     sync_company_dividends,
-    sync_dividend_history,
     sync_open_positions,
 )
 
@@ -27,8 +28,8 @@ def run_task(func):
     return wrapper
 
 
-@run_task
 @celery.task
+@run_task
 def sync_positions_task():
     """
     Fetch currently open positons from Trading212 and update the database
@@ -37,8 +38,8 @@ def sync_positions_task():
     sync_open_positions()
 
 
-@run_task
 @celery.task
+@run_task
 def sync_account_summary_task():
     """
     Fetch Account Summary data from Trading212 and update the database
@@ -49,19 +50,23 @@ def sync_account_summary_task():
 
 @celery.task
 @run_task
-def sync_dividend_history_task(year: int | None = None):
-    """
-    Request, Download and Process CSV from Trading212
+def download_dividend_report_task(report_id: int, year: int):
+    """Downloads and processes the report after the initial delay."""
+    download_and_process_report(report_id, year)
+    sync_company_dividends_task.delay()
 
-    This is a scheduled job (see config.py) and also can
-    be run on demand via the `/download` endpoint
-    """
+
+@celery.task
+@run_task
+def sync_dividend_history_task(year: int | None = None):
     if year is None:
         year = datetime.now().year
-
-    sync_dividend_history(year)
-
-    sync_company_dividends_task.delay(year)
+    report_id = request_dividend_report(year)
+    download_dividend_report_task.apply_async(
+        args=[report_id, year],
+        # Allow Trading212 to process the report before kicking the job off
+        countdown=25,
+    )
 
 
 @celery.task
