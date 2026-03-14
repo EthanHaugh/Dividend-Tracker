@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from models.models import Company
-from app.db import db
+from database.models import Company
+from database.db import db
 
 
 def ensure_placeholder_company():

@@ -2,8 +2,8 @@ import csv
 from datetime import datetime
 from decimal import Decimal
 
-from app.db import db
-from models.models import Company, Dividend, YearlyDividends
+from database.db import db
+from database.models import Company, Dividend, YearlyDividends
 
 
 def calculate_estimated_deposits(

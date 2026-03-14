@@ -6,9 +6,12 @@ import logging
 
 from sqlalchemy import delete, extract, func
 from sqlalchemy.exc import IntegrityError
-from services.utils import calculate_estimated_deposits, process_dividend_csv
+from celery_service.services.utils import (
+    calculate_estimated_deposits,
+    process_dividend_csv,
+)
 
-from app.db import db
+from database.db import db
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
@@ -16,15 +19,15 @@ from consts.consts import (
     RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
-from models.models import (
+from database.models import (
     AccountMetadata,
     Company,
     Dividend,
     DividendReport,
     YearlyDividends,
 )
-from models.classes import AccountSummaryResponse, DividendHistory
-from utils.endpoint_utils import end_of_or_today
+from routes.classes import AccountSummaryResponse, DividendHistory
+from routes.endpoint_utils import end_of_or_today
 
 
 logger = logging.getLogger(__name__)

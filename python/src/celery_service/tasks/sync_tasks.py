@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime
 from functools import wraps
-from celery_app import celery
-from services.sync_service import (
+from celery_service.celery_app import celery
+from celery_service.services.sync_service import (
     download_and_process_report,
     request_dividend_report,
     sync_account_summary,
@@ -52,6 +52,7 @@ def sync_account_summary_task():
 @run_task
 def download_dividend_report_task(report_id: int, year: int):
     """Downloads and processes the report after the initial delay."""
+
     download_and_process_report(report_id, year)
     sync_company_dividends_task.delay()
 
@@ -59,12 +60,18 @@ def download_dividend_report_task(report_id: int, year: int):
 @celery.task
 @run_task
 def sync_dividend_history_task(year: int | None = None):
+    """
+    Fetch requested report from Trading 212
+
+    Seperate job to requesting a report to prevent
+    working locking up on long running task
+    """
     if year is None:
         year = datetime.now().year
     report_id = request_dividend_report(year)
     download_dividend_report_task.apply_async(
         args=[report_id, year],
-        # Allow Trading212 to process the report before kicking the job off
+        # Allow Trading212 time to generate report before kicking the job off
         countdown=25,
     )
 

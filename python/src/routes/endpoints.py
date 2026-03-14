@@ -6,7 +6,12 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Query
 
 from app import db
-from models.models import AccountMetadata, Company, Dividend, YearlyDividends
+from database.models import (
+    AccountMetadata,
+    Company,
+    Dividend,
+    YearlyDividends,
+)
 
 dividends_bp = Blueprint("dividends", __name__)
 

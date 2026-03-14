@@ -27,6 +27,7 @@ brew install redis
       flask db init
       flask db migrate -m "Initial migration"
       flask db upgrade
+      flask seed-db
       ```
 
 ## To Initialise the Frontend

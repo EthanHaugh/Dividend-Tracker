@@ -1,5 +1,5 @@
 from app import create_app
-from celery_app import init_celery
+from celery_service.celery_app import init_celery
 
 app = create_app()
 init_celery(app)
