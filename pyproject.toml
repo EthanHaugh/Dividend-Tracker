@@ -7,3 +7,9 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 pythonpath = [
   "./python/src"
 ]
+
+[tool.coverage.run]
+source = ["python/src"]
+omit = [
+    "python/src/tests/*",
+]
