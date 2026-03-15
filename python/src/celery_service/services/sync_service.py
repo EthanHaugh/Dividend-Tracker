@@ -26,8 +26,8 @@ from database.models import (
     DividendReport,
     YearlyDividends,
 )
-from routes.classes import AccountSummaryResponse, DividendHistory
-from routes.endpoint_utils import end_of_or_today
+from models.classes import AccountSummaryResponse, DividendHistory
+from utils.endpoint_utils import end_of_or_today
 
 
 logger = logging.getLogger(__name__)
@@ -47,10 +47,9 @@ def sync_open_positions() -> None:
 
     response = requests.get(RETRIEVE_OPEN_POSITIONS_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
-        logger.error(
+        raise RuntimeError(
             f"Unable to retrieve open positions from Trading212: {response.json()}"
         )
-        return
 
     logger.info("Processing Companies...")
     for company in response.json():
@@ -87,10 +86,9 @@ def sync_account_summary() -> None:
 
     response = requests.get(RETRIEVE_ACCOUNT_SUMMARY_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
-        logger.error(
+        raise RuntimeError(
             f"Unable to retrieve account summary from Trading212: {response.json()}"
         )
-        return
 
     response_data = AccountSummaryResponse(**response.json())
 
