@@ -5,7 +5,7 @@ from flask import request as flask_request
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Query
 
-from app import db
+from database.db import db
 from database.models import (
     AccountMetadata,
     Company,

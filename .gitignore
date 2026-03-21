@@ -35,3 +35,6 @@ yarn-error.log*
 
 # Redis
 dump.rdb
+
+# PyTest Coverage
+.coverage

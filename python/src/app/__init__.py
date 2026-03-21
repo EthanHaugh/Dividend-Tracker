@@ -11,10 +11,11 @@ from routes.updates import updates_bp
 migrate = Migrate()
 
 
-def create_app() -> Flask:
+def create_app(env: str | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
 
-    env = os.environ.get("FLASK_ENV", "PRODUCTION")
+    if not env:
+        env = os.environ.get("FLASK_ENV", "PRODUCTION")
     app.config.from_object(config[env])
 
     CORS(app)

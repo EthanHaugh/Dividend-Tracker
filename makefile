@@ -28,3 +28,10 @@ ts-deps: ## Install frontend npm dependencies
 
 run-fe: ## Start frontend dev server
 	cd $(TS_DIR) && npm run start
+
+
+test-py: ## Run Python tests
+	python -m pytest .
+
+test-py-cov: ## Run Python tests with coverage
+	python -m pytest ./python/src/tests --cov=python/src

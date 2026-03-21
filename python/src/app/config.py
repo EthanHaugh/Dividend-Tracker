@@ -37,7 +37,14 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}
 
 
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}
+
+
 config = {
     "DEVELOPMENT": DevelopmentConfig,
+    "TESTING": TestingConfig,
     # "PRODUCTION": ProductionConfig,
 }
