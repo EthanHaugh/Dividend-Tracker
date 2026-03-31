@@ -1,45 +1,126 @@
-# Getting Started
+# Dividend Tracker
 
-This project is a mono-repo consisting of a Python Backend and a React Frontend in Typescript
+A full-stack web application for tracking dividend-paying stocks from Trading212 specifically, with automated data synchronization and portfolio analytics.
 
-## Install Necessary Packages
+## Features
+
+- **Dividend Portfolio Tracking** - Monitor your dividend-paying stocks and their performance
+- **Dashboard Visualizations** - Track dividend trends with interactive charts and metrics
+- **Automated Sync** - Celery background tasks keep your portfolio data up-to-date
+- **Modern Tech Stack** - React + TypeScript frontend, Python Flask backend with async task processing
+
+## Tech Stack
+
+**Backend:**
+- Python 3.13+
+- Flask web framework
+- SQLAlchemy ORM
+- Celery for async tasks
+- Redis message broker
+- pytest for testing
+
+**Frontend:**
+- React 19
+- TypeScript
+- Ant Design & Material-UI components
+- Chart.js for visualizations
+- CSS Modules for styling
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.13+
+- Node.js 16+
+- Redis
+
+### Development Setup
+
+Complete setup instructions are available in [Development Guide](./docs/DEVELOPMENT.md).
+
+For a quick overview:
+
+1. **Backend Setup**
+   ```bash
+   cd python
+   python -m venv venv
+   source venv/bin/activate
+   make py-deps
+   make run-web
+   ```
+
+2. **Frontend Setup** (new terminal)
+   ```bash
+   make ts-deps
+   make run-fe
+   ```
+
+3. **Start Redis and Celery** (additional terminals)
+   ```bash
+   brew services start redis
+   make run-celery-worker
+   make run-celery-beat
+   ```
+
+The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:5000`.
+
+## Documentation
+
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Complete setup and development instructions
+- **[Architecture](./docs/ARCHITECTURE.md)** - Project structure and technical design
+
+## Project Structure
+
+This is a monorepo containing both backend and frontend:
+
 ```
-brew install redis
-````
+Dividend-Tracker/
+├── python/          # Backend (Flask + Celery)
+├── ts/              # Frontend (React + TypeScript)
+├── docs/            # Documentation
+├── makefile         # Development commands
+└── requirements.txt # Python dependencies
+```
 
-## To Initialise the Backend
+## Available Commands
 
-1. Create Python virtual Envionment with the `python` directory
-   - `cd ./python`
-   - `python -m venv ./venv`
+### Backend Commands
 
-1. Activate the Python Virtual Environment
-   - Windows `./python./venv/Scripts/activate`
-   - MacOS `source ./python/.venv/bin/activate`
-2. Install dependencies
-   - Run `make py-deps`
-3. Initialise the Webserver
-   - Run `make run-web`
-4. Open a new terminal window 
-   - Navigate to `./python/src`
-   - Run 
-      ```bash
-      flask db init
-      flask db migrate -m "Initial migration"
-      flask db upgrade
-      flask seed-db
-      ```
+```bash
+make py-deps           # Install Python dependencies
+make run-web           # Start Flask development server
+make run-celery-worker # Start Celery worker
+make run-celery-beat   # Start Celery scheduler
+make test-py           # Run Python tests
+make test-py-cov       # Run Python tests with coverage
+```
 
-## To Initialise the Frontend
+### Frontend Commands
 
-1. Install depedencies
-   - Run `make ts-deps`
-2. Start the development server
-   - Run `make run-fe`
+```bash
+make ts-deps          # Install npm dependencies
+make run-fe           # Start React development server
+```
 
-## To Initialise Redis and Celery
+### General Commands
 
-1. Ensure Redis is running
-   - `brew services start redis`
-   - Run `make run-celery-worker`
-   - Run `make run-celery-beat`
+```bash
+make help             # Show all available commands
+make freeze           # Update requirements.txt with installed packages
+```
+
+## Testing
+
+### Python Tests
+
+```bash
+make test-py          # Run all tests
+make test-py-cov      # Run tests with coverage report
+```
+
+### Frontend Tests
+
+```bash
+cd ts
+npm test
+```
