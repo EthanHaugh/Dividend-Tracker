@@ -52,16 +52,25 @@ export function DividendsTable() {
       title: "Company",
       dataIndex: "name",
       key: "name",
-      width: "80%",
+      width: "65%",
       sorter: true,
     },
     {
       title: "Total Payment",
-      dataIndex: "total_payment",
+      dataIndex: "total_payments",
       render: (payment: string) => <span>£ {Number(payment).toFixed(2)}</span>,
       key: "total_payments",
+      width: "15%",
       sorter: true,
     },
+    {
+      title: "Last Payment Date",
+      dataIndex: "last_payment_date",
+      render: (date: string) => date,
+      width: "20%",
+      key: 'last_payment_date',
+      sorter: true,
+    }
   ];
 
   const handleSearchChange = (value: string) => {

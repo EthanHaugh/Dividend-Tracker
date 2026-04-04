@@ -27,7 +27,6 @@ def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:
     """Validate `sort_by` parameter to avoid SQL Injection"""
 
     if sort_by:
-        # Avoid SQL Injection
         if sort_by not in allowed_sort_fields:
             return False
 
@@ -142,13 +141,14 @@ def list_company_totals():
         "sort_direction", default=SortDirection.DESCENDING, type=SortDirection
     )
 
-    allowed_sort_fields = ["name", "total_payments"]
+    allowed_sort_fields = ["name", "total_payments", "last_payment_date"]
 
     if not _vaidate_sort_by(sort_by, allowed_sort_fields):
         return jsonify(
             {"error": f"sort_by parameter must be one of: {allowed_sort_fields}"}
         ), 400
 
+    # Parse query string parameters to list
     if filters:
         filters = filters.split(",")
 
@@ -158,14 +158,25 @@ def list_company_totals():
         db.session.query(
             Company.ticker,
             Company.name,
-            func.sum(Dividend.total_payment).label("total_payment"),
+            Company.total_payments,
+            func.strftime("%d-%m-%Y", func.max(Dividend.payment_date)).label(
+                "last_payment_date"
+            ),
         )
         .join(Dividend)
         .group_by(Company.ticker)
     )
     total_count = query.count()
 
-    query = _sort_query(query, Company, sort_by, sort_direction)
+    # Special handling for join and labelled column
+    if sort_by == "last_payment_date":
+        sort_column = func.max(Dividend.payment_date)
+        if sort_direction == SortDirection.DESCENDING:
+            query = query.order_by(sort_column.desc())
+        else:
+            query = query.order_by(sort_column.asc())
+    else:
+        query = _sort_query(query, Company, sort_by, sort_direction)
 
     if filters:
         query = query.filter(Company.ticker.in_(filters))
