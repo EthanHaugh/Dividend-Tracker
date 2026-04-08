@@ -1,13 +1,13 @@
 import os
 from celery.schedules import crontab
-from sqlalchemy import NullPool
+from sqlalchemy import NullPool, QueuePool
 
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Assign Celery Broker to Redis
-    CELERY_BROKER_URL = "redis://localhost:6379/0"
+    CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
     # Register re-occuring tasks
     CELERY_BEAT_SCHEDULE = {
@@ -24,6 +24,11 @@ class Config:
             "schedule": crontab(0, 0, day_of_month="1"),
         },
     }
+
+    # CORS configuration
+    ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(
+        ","
+    )
 
 
 class DevelopmentConfig(Config):
@@ -43,8 +48,30 @@ class TestingConfig(Config):
     SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}
 
 
+class ProductionConfig(Config):
+    DEBUG = False
+    TESTING = False
+
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "poolclass": QueuePool,
+        "pool_size": 5,
+        "max_overflow": 4,
+        "pool_timeout": 10,
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    }
+
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    PREFERRED_URL_SCHEME = "https"
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+
 config = {
     "DEVELOPMENT": DevelopmentConfig,
     "TESTING": TestingConfig,
-    # "PRODUCTION": ProductionConfig,
+    "PRODUCTION": ProductionConfig,
 }

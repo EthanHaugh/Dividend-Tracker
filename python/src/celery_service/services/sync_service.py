@@ -43,15 +43,12 @@ https://docs.trading212.com/api
 def sync_open_positions() -> None:
     """Fetch and update open positions in the database"""
 
-    logger.info("Starting sync_positions_task")
-
     response = requests.get(RETRIEVE_OPEN_POSITIONS_URL, headers=REQUEST_HEADERS)
     if response.status_code != 200:
         raise RuntimeError(
             f"Unable to retrieve open positions from Trading212: {response.json()}"
         )
 
-    logger.info("Processing Companies...")
     for company in response.json():
         # Check for existing company and update
         existing_company: Company | None = (
@@ -74,7 +71,6 @@ def sync_open_positions() -> None:
                     average_buy_price=float(company["averagePricePaid"]),
                 )
             )
-    logger.info("Finished Processing Companies!")
     db.session.commit()
 
     # For historical data, carry out no clean up on no longer open poisitons

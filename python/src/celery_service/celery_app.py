@@ -15,12 +15,7 @@ def init_celery(app=None):
     flask_app = app
 
     celery.conf.update(app.config)
-    celery.conf.broker_url = app.config.get(
-        "CELERY_BROKER_URL", "redis://localhost:6379/0"
-    )
-    celery.conf.result_backend = app.config.get(
-        "CELERY_RESULT_BACKEND", "redis://localhost:6379/0"
-    )
+    celery.conf.broker_url = app.config.get("CELERY_BROKER_URL")
     celery.conf.beat_schedule = app.config.get("CELERY_BEAT_SCHEDULE", {})
 
     class ContextTask(celery.Task):
