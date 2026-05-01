@@ -18,7 +18,7 @@ run-web: ## Start Flask dev server
 	flask --app $(PY_DIR)/run.py run --debug
 
 run-web-prod: ## Start the production server
-	cd python/src && waitress server --host 127.0.0.1 --port 8080 run:app
+	cd python/src && waitress-serve --host 127.0.0.1 --port 8080 run:app
 
 run-celery-worker: ## Start Celery worker
 	cd $(PY_DIR) && celery -A celery_service.celery_run.celery worker --loglevel=info

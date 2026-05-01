@@ -2,6 +2,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import { useGetPieChartData } from "../../hooks/api.hooks";
 import { CircularProgress, Typography } from "@mui/material";
 import { PieValueType } from "@mui/x-charts";
+import { Empty } from "antd";
 
 function generateColorPalette(count: number): string[] {
   const colors: string[] = [];
@@ -37,7 +38,7 @@ export function DonutChart() {
   return (
     isLoading ? (
       <CircularProgress size={48} />
-    ) : (
+    ) : !isLoading && data?.data.length === 0 ? <Empty /> : (
       <>
         <Typography
           variant="subtitle1"
