@@ -180,6 +180,13 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for setup instructions and testing detail
 - **API Pagination**: Consider implementing pagination for large datasets
 - **Frontend Optimization**: React components use CSS Modules for efficient styling
 
+## Environment Variables
+
+- **FLASK_ENV**: One of `PRODUCTION`, `DEVELOPMENT` or `TESTING`
+- **REDIS_URL**: Broker URL to enable Celery scheduling
+- **ALLOWED_ORIGINS**: CORS configuration, specify which origins can interact with the web server
+- **DATABASE_URL**: The Database URL to point to in production, in development this defaults to SQLite
+
 ## Security Notes
 
 - Database connections use SQLite for development (upgrade to PostgreSQL for production)

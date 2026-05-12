@@ -50,10 +50,6 @@ def validate_config(config: Config) -> bool:
         except Exception as e:
             errors.append(f"Invalid CELERY_BROKER_URL: {e}")
 
-    if not config["DEBUG"]:
-        if config["SECRET_KEY"] == "change-me-in-production":
-            errors.append("SECRET_KEY is not set for production!")
-
     if errors:
         raise ValueError(
             "Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors)

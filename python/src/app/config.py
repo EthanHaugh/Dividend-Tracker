@@ -63,7 +63,6 @@ class ProductionConfig(Config):
         "pool_recycle": 1800,
     }
 
-    SECRET_KEY = os.environ.get("SECRET_KEY")
     PREFERRED_URL_SCHEME = "https"
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
