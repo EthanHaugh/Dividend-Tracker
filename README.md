@@ -9,6 +9,12 @@ A full-stack web application for tracking dividend-paying stocks from Trading212
 - **Automated Sync** - Celery background tasks keep your portfolio data up-to-date
 - **Modern Tech Stack** - React + TypeScript frontend, Python Flask backend with async task processing
 
+The Landing Page:
+![plot](./docs/landing_page.png)
+
+Dividends per Company Table
+![plot](./docs/dividends_table.png)
+
 ## Tech Stack
 
 **Backend:**
