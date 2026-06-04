@@ -25,7 +25,7 @@ export function InfoCard({
   return (
     <Card className={styles.card}>
       <Skeleton active loading={loading} paragraph={false}>
-        <Row align="middle" justify="space-between">
+        <Row justify="space-between" style={{ height: '100%' }}>
           <Col span={20}>
             <Statistic
               title={title}
