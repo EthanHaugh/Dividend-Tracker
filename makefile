@@ -11,14 +11,19 @@ help: ## Show this help message
 freeze: ## Freeze dependencies into requirements.txt
 	pip freeze > requirements.txt
 
+# --------------
+#  Install Deps
+# --------------	
+
 py-deps: ## Install all depedencies in requirements.txt
 	pip install -r requirements.txt
 
-run-web: ## Start Flask dev server
-	flask --app $(PY_DIR)/run.py run --debug
+ts-deps: ## Install frontend npm dependencies
+	cd $(TS_DIR) && npm install
 
-run-web-prod: ## Start the production server
-	cd python/src && waitress-serve --host 127.0.0.1 --port 8080 run:app
+# --------------
+#  Async Tasks
+# --------------	
 
 run-celery-worker: ## Start Celery worker
 	cd $(PY_DIR) && celery -A celery_service.celery_run.celery worker --loglevel=info
@@ -26,15 +31,32 @@ run-celery-worker: ## Start Celery worker
 run-celery-beat: ## Start Celery scheduler
 	cd $(PY_DIR) && celery -A celery_service.celery_run.celery beat --loglevel=info
 
-ts-deps: ## Install frontend npm dependencies
-	cd $(TS_DIR) && npm install
+
+# --------------
+#   Web Server
+# --------------
+
+run-web: ## Start Flask dev server
+	flask --app $(PY_DIR)/run.py run --debug
+
+run-web-prod: ## Start the production server
+	cd python/src && waitress-serve --host 127.0.0.1 --port 8080 run:app
 
 run-fe: ## Start frontend dev server
 	cd $(TS_DIR) && npm run start
 
+# --------------
+#    Testing
+# --------------
 
 test-py: ## Run Python tests
 	python -m pytest .
 
 test-py-cov: ## Run Python tests with coverage
 	python -m pytest ./python/src/tests --cov=python/src
+
+test-fe: ## Run TS tests
+	cd ./ts && npx vitest
+
+test-fe-cov: ## Run TS tests with coverage
+	cd ./ts && npx vitest --coverage

@@ -23,7 +23,7 @@ Dividends per Company Table
 - SQLAlchemy ORM
 - Celery for async tasks
 - Redis message broker
-- pytest for testing
+- pytest & vitest for testing
 
 **Frontend:**
 - React 19
@@ -37,7 +37,7 @@ Dividends per Company Table
 ### Prerequisites
 
 - Python 3.13+
-- Node.js 16+
+- Node.js 25+
 - Redis
 
 ### Development Setup
@@ -117,16 +117,18 @@ make freeze           # Update requirements.txt with installed packages
 
 ## Testing
 
+Aiming for 100% test coverage 
+
 ### Python Tests
 
 ```bash
-make test-py          # Run all tests
-make test-py-cov      # Run tests with coverage report
+make test-py          # Run Python tests
+make test-py-cov      # Run Python tests with coverage report
 ```
 
 ### Frontend Tests
 
 ```bash
-cd ts
-npm test
+cd ts                 # Run TypeScript tests
+npx vitest            # Run TypeScript tests with coverage
 ```
