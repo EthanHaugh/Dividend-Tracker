@@ -45,6 +45,7 @@ export function DividendsTableRowExpand({
       dataSource={data?.data}
       loading={isLoading}
       rowKey={(row) => row.dividend_id}
+      data-testid={`${ticker}-table`}
       pagination={{
         current: page,
         pageSize,

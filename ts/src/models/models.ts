@@ -53,14 +53,15 @@ interface AvailableTicker {
 }
 
 export interface Dividend {
+  company_id: number,
   created_at: string;
   dividend_id: number;
   number_of_shares: number;
-  report_id: string;
+  report_id: number;
   year: number;
   ticker: string;
   payment_date: string;
-  amount: number;
+  total_payment: string;
   currency: string;
 }
 
