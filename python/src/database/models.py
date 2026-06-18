@@ -1,6 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import (
     Integer,
     String,
@@ -165,4 +167,42 @@ class AccountMetadata(Base, BaseModel):
     estimated_deposits: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+# Maps directly to the Trading212 API
+# https://docs.trading212.com/api/historical-events/transactions#historical-events/transactions/t=response&c=200&path=items
+class TransactionType(str, Enum):
+    WITHDRAW = "WITHDRAW"
+    DEPOSIT = "DEPOSIT"
+    FEE = "FEE"
+    TRANSFER = "TRANSFER"
+
+
+class AccountTransactions(Base, BaseModel):
+    """
+    Portfolio-level deposits.
+
+    Stores transaction data.
+    """
+
+    __tablename__ = "account_transactions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    transaction_date: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+    transaction_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    transaction_type: Mapped[TransactionType] = mapped_column(
+        SQLEnum(
+            TransactionType,
+            name="transaction_type",
+            native_enum=False,
+            create_constraint=True,
+        ),
+        nullable=False,
     )
