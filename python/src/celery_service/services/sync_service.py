@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 import os
 import requests
@@ -7,7 +7,6 @@ import logging
 from sqlalchemy import delete, extract, func
 from sqlalchemy.exc import IntegrityError
 from celery_service.services.utils import (
-    calculate_estimated_deposits,
     process_dividend_csv,
 )
 
@@ -91,27 +90,37 @@ def sync_account_summary() -> None:
 
     response_data = AccountSummaryResponse(**response.json())
 
-    # Yearly Dividends may be empty if no reports have been downloaded
-    total_dividends: float = float(
-        db.session.query(func.sum(YearlyDividends.total_dividends)).scalar() or 0.0
+    account_metadata = db.session.query(AccountMetadata).first()
+    estimated_deposits = (
+        db.session.query(
+            func.coalesce(func.sum(AccountTransactions.transaction_amount), 0)
+        )
+        .filter(AccountTransactions.transaction_type != TransactionType.FEE)
+        .scalar()
+    )
+    one_year_ago = datetime.now() - timedelta(days=365)
+    estimated_yearly_contribution = (
+        db.session.query(
+            func.coalesce(func.sum(AccountTransactions.transaction_amount), 0)
+        )
+        .filter(AccountTransactions.transaction_type != TransactionType.FEE)
+        .filter(AccountTransactions.transaction_date >= one_year_ago)
+        .scalar()
     )
 
-    account_metadata = db.session.query(AccountMetadata).first()
-    estimated_deposits = calculate_estimated_deposits(
-        response_data.investments.totalCost,
-        total_dividends,
-        response_data.investments.realizedProfitLoss,
-    )
     current_value = Decimal(str(response_data.investments.currentValue))
 
     if not account_metadata:
         account_metadata = AccountMetadata(
-            account_value=current_value, estimated_deposits=estimated_deposits
+            account_value=current_value,
+            estimated_deposits=estimated_deposits,
+            estimated_contribution_year=estimated_yearly_contribution,
         )
         db.session.add(account_metadata)
     else:
         account_metadata.account_value = current_value
         account_metadata.estimated_deposits = estimated_deposits
+        account_metadata.estimated_contribution_year = estimated_yearly_contribution
 
     db.session.commit()
 
@@ -257,8 +266,6 @@ def sync_account_transactions() -> None:
                     db.session.rollback()
                     logger.info("Duplicate Transaction Found...")
 
-                    break
-
     response = requests.get(RETRIEVE_ACCOUNT_TRANSACTIONS_URL, headers=REQUEST_HEADERS)
     data = response.json()
     processItems(data)
@@ -272,3 +279,14 @@ def sync_account_transactions() -> None:
         data = response.json()
 
         processItems(data)
+
+    # Capture first deposit date
+    initial_deposit_date: datetime = datetime.fromisoformat(
+        data["items"][-1]["dateTime"].replace("Z", "+00:00")
+    )
+
+    metadata = db.session.query(AccountMetadata).first()
+
+    if metadata:
+        metadata.initial_deposit_date = initial_deposit_date
+        db.session.commit()

@@ -6,12 +6,6 @@ from database.db import db
 from database.models import Company, Dividend, YearlyDividends
 
 
-def calculate_estimated_deposits(
-    total_cost: float, total_dividends: float, realised_profit_loss: float
-) -> Decimal:
-    return Decimal(str(total_cost - total_dividends - realised_profit_loss))
-
-
 def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
     placeholder_company = (
         db.session.query(Company).filter(Company.ticker == "UNKNOWN").one()

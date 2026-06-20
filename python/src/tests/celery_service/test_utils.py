@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 from celery_service.services.utils import (
     process_dividend_csv,
-    calculate_estimated_deposits,
 )
 from database.models import Company
 
@@ -34,41 +33,6 @@ def mock_db_session():
     with patch(f"{MODULE}.db") as mock_db:
         mock_db.session = MagicMock()
         yield mock_db.session
-
-
-class TestCalculateEstimatedDeposits:
-    def test_basic_calculation(self):
-        result = calculate_estimated_deposits(
-            total_cost=10000.0,
-            total_dividends=500.0,
-            realised_profit_loss=200.0,
-        )
-
-        assert isinstance(result, Decimal)
-        assert result == Decimal("9300.0")
-
-    def test_zero_dividends_and_profit(self):
-        result = calculate_estimated_deposits(5000.0, 0.0, 0.0)
-
-        assert result == Decimal("5000.0")
-
-    def test_negative_profit_loss_increases_deposits(self):
-        """A realised loss means estimated deposits should be higher."""
-
-        result = calculate_estimated_deposits(
-            total_cost=10000.0,
-            total_dividends=0.0,
-            realised_profit_loss=-500.0,
-        )
-
-        assert result == Decimal("10500.0")
-
-    def test_floating_point_precision(self):
-        """Ensures Decimal conversion avoids float precision errors."""
-
-        result = calculate_estimated_deposits(1000.10, 0.01, 0.01)
-
-        assert result == Decimal("1000.08")
 
 
 class TestProcessDividendCsv:

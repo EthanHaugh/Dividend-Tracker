@@ -165,6 +165,12 @@ class AccountMetadata(Base, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     account_value: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     estimated_deposits: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    estimated_contribution_year: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0.0"
+    )
+    initial_deposit_date: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
