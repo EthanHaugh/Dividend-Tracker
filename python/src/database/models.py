@@ -188,7 +188,9 @@ class AccountTransactions(Base, BaseModel):
 
     __tablename__ = "account_transactions"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, unique=True, nullable=False
+    )
     transaction_date: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

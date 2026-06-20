@@ -19,6 +19,10 @@ class Config:
             "task": "celery_service.tasks.sync_tasks.sync_account_summary_task",
             "schedule": crontab(minute="*/5"),
         },
+        "sync-account-transactions-once-every-5-minutes": {
+            "task": "celery_service.tasks.sync_tasks.sync_account_transactions_task",
+            "schedule": crontab(minute="*/5"),
+        },
         "sync-dividend-history-onec-per-month": {
             "task": "celery_service.tasks.sync_tasks.sync_dividend_history_task",
             "schedule": crontab(0, 0, day_of_month="1"),

@@ -6,6 +6,7 @@ from celery_service.services.sync_service import (
     download_and_process_report,
     request_dividend_report,
     sync_account_summary,
+    sync_account_transactions,
     sync_company_dividends,
     sync_open_positions,
 )
@@ -46,6 +47,16 @@ def sync_account_summary_task():
     """
 
     sync_account_summary()
+
+
+@celery.task
+@run_task
+def sync_account_transactions_task():
+    """
+    Fetch Account Transactions data from Trading212 and update the database
+    """
+
+    sync_account_transactions()
 
 
 @celery.task

@@ -16,14 +16,17 @@ from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
     RETRIEVE_ACCOUNT_SUMMARY_URL,
+    RETRIEVE_ACCOUNT_TRANSACTIONS_URL,
     RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
 from database.models import (
     AccountMetadata,
+    AccountTransactions,
     Company,
     Dividend,
     DividendReport,
+    TransactionType,
     YearlyDividends,
 )
 from models.classes import AccountSummaryResponse, DividendHistory
@@ -225,3 +228,47 @@ def sync_company_dividends() -> None:
         company.total_payments = total_payments or Decimal(0)
 
     db.session.commit()
+
+
+def sync_account_transactions() -> None:
+    """Update the Account Transactions table"""
+
+    def processItems(data: dict):
+        if (items := data.get("items")) is not None:
+            for item in items:
+                try:
+                    db.session.add(
+                        AccountTransactions(
+                            id=item["reference"],
+                            transaction_date=datetime.fromisoformat(
+                                item["dateTime"].replace("Z", "+00:00")
+                            ),
+                            created_at=datetime.now(),
+                            updated_at=datetime.now(),
+                            transaction_amount=item["amount"],
+                            transaction_type=TransactionType[item["type"]],
+                        )
+                    )
+                    db.session.commit()
+                except IntegrityError:
+                    # Using the item.reference as the primary key, ensure it
+                    # isn't already in the db, otherwise rollback and drop out
+                    # since we've already logged these transactions
+                    db.session.rollback()
+                    logger.info("Duplicate Transaction Found...")
+
+                    break
+
+    response = requests.get(RETRIEVE_ACCOUNT_TRANSACTIONS_URL, headers=REQUEST_HEADERS)
+    data = response.json()
+    processItems(data)
+
+    while data.get("nextPagePath") is not None:
+        response = requests.get(
+            f"{RETRIEVE_ACCOUNT_TRANSACTIONS_URL}&{data.get('nextPagePath').removeprefix('limit=50')}",
+            headers=REQUEST_HEADERS,
+        )
+
+        data = response.json()
+
+        processItems(data)
