@@ -8,9 +8,15 @@ from sqlalchemy.orm import Query
 from database.db import db
 from database.models import (
     AccountMetadata,
+    AccountTransactions,
     Company,
     Dividend,
+    TransactionType,
     YearlyDividends,
+)
+from utils.dividend_projection import (
+    calculate_average_annual_contributions,
+    project_portfolio_dividends,
 )
 
 dividends_bp = Blueprint("dividends", __name__)
@@ -276,3 +282,17 @@ def get_available_tickers():
         )
 
     return jsonify({"data": [company._asdict() for company in query.all()]}), 200
+
+
+@dividends_bp.route("/dividend-projection", methods=["POST"])
+def get_dividend_projection():
+    annual_contributions = flask_request.args.get("annual_contributions")
+    reinvest = flask_request.args.get("reinvest", True)
+    years = flask_request.args.get("years", 10)
+
+    if not annual_contributions:
+        deposits = calculate_average_annual_contributions()
+
+    return project_portfolio_dividends(
+        annual_contribution=float(deposits), years=years, reinvest=reinvest
+    ).as_dict()
