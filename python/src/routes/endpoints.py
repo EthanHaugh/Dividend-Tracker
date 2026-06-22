@@ -284,7 +284,7 @@ def get_available_tickers():
     return jsonify({"data": [company._asdict() for company in query.all()]}), 200
 
 
-@dividends_bp.route("/dividend-projection", methods=["POST"])
+@dividends_bp.route("/dividend-projection", methods=["GET"])
 def get_dividend_projection():
     annual_contributions = flask_request.args.get("annual_contributions")
     reinvest = flask_request.args.get("reinvest", True)
