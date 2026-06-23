@@ -13,6 +13,7 @@
     "@types/jest": "^27.5.2",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
+    "ajv": "^8.8.2",
     "antd": "^5.27.0",
     "bootstrap": "^3.4.1",
     "dayjs": "^1.11.19",
