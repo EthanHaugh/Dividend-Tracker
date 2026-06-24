@@ -25,6 +25,7 @@ import LineChart from "./components/line-chart/line-chart";
 import { useHealthCheck, useUpdateCurrentYearDividends } from "./hooks/api.hooks";
 import { useState } from "react";
 import dayjs from "dayjs";
+import { DividendProjectionsChart } from "./components/projection-chart/projection-chart";
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -115,7 +116,9 @@ function App() {
                 <LineChart />
               </Col>
             </Row>
-            <Space direction="vertical" />
+            <Divider className="my-4" />
+            <DividendProjectionsChart />
+            <Divider className="my-4" />
             <Row>
               <DividendsTable />
             </Row>
