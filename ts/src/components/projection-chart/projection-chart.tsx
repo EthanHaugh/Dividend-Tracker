@@ -84,7 +84,7 @@ export function DividendProjectionsChart() {
                                 variant="filled"
                                 placeholder="Years"
                                 onChange={onProjectionYearsChange}
-                                value={projectionYears} min={1}
+                                value={projectionYears} min={5}
                                 max={20}
                                 prefix={<CalendarOutlined />}
                                 className={styles.dataEntry}
