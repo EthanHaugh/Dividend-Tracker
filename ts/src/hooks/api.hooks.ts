@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   AccountCashResponse,
+  DividendProjectionsResponse,
   ListAvailableTickersResponse,
   ListCompanyDividendsResponse,
   ListDividendsResponse,
@@ -107,7 +108,7 @@ export function useGetPreviousYearDividends() {
   const { data: fullData, ...rest } = useFetch<YearlyDividendsResponse[]>(
     `${BASE_URL}/yearly-dividends?year=${year}`
   );
-  
+
   return {
     data: fullData ? fullData[0] : null,
     ...rest,
@@ -134,7 +135,7 @@ export function useListCompanyTotals(
   sortBy?: string,
   sortDirection?: string,
 ) {
-  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}${sortBy ? `&sort_by=${sortBy}`: ''}${sortDirection ? `&sort_direction=${sortDirection}`: ''}`;
+  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}${sortBy ? `&sort_by=${sortBy}` : ''}${sortDirection ? `&sort_direction=${sortDirection}` : ''}`;
   return useFetch<ListDividendsResponse>(url, [page, pageSize, search, filters, sortBy, sortDirection]);
 }
 
@@ -149,7 +150,7 @@ export function useListCompanyDividends(
 
 export function useUpdateCurrentYearDividends(onSuccess?: () => void) {
   const { mutate: baseMutate, ...rest } = useMutation<ListCompanyDividendsResponse>(onSuccess);
-  
+
   const mutate = async (year?: number) => {
     const url = `${BASE_URL}/download?year=${year || new Date().getFullYear()}`;
     return baseMutate(url);
@@ -162,7 +163,7 @@ export function useListAvailableTickers() {
   const { data: fullData, ...rest } = useFetch<ListAvailableTickersResponse>(
     `${BASE_URL}/list-available-tickers`
   );
-  
+
   return {
     data: fullData?.data || null,
     ...rest,
@@ -173,7 +174,18 @@ export function useHealthCheck() {
   const { data: fullData, ...rest } = useFetch<{ data: string[] }>(
     `${BASE_URL}/health`
   );
-  
+
+  return {
+    data: fullData?.data || null,
+    ...rest,
+  };
+}
+
+export function useGetDividendProjections(years: number | null, reinvest: boolean | null, contributions: number | null) {
+  const { data: fullData, ...rest } = useFetch<{ data: DividendProjectionsResponse }>(
+    `${BASE_URL}/dividend-projection?years=${years}&reinvest=${reinvest}&annual_contributions=${contributions}`
+  );
+
   return {
     data: fullData?.data || null,
     ...rest,

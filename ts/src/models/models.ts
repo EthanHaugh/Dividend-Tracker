@@ -68,3 +68,41 @@ export interface Dividend {
 export interface ListAvaiableTickersResponse {
   data: string[]
 }
+
+export interface DividendProjectionsResponse {
+  annual_contribution: number,
+  cagr: number,
+  cagr_pct: string
+  capital_growth_rate: number,
+  capital_growth_rate_pct: string,
+  cumulative_dividends_recieived: number,
+  final_year: {
+    annual_dividend: number,
+    portfolio_value: number,
+    real_annual_dividend: number,
+    real_portfolio_value: number,
+    year: number
+  },
+  growth_rate: number,
+  growth_rate_companies_used: number,
+  growth_rate_pct: string,
+  inflation_rate: number,
+  inflation_rate_pct: string,
+  investment_only_growth: number,
+  reinvest: boolean,
+  starting_portfolio_value: number,
+  starting_yield_pct: string,
+  total_contributions: number,
+  total_dividend_growth_pct: string,
+  years: DividendProjectionYears[]
+}
+
+interface DividendProjectionYears {
+  annual_dividend: number,
+  cumulative_contributions: number,
+  portfolio_value: number,
+  real_annual_dividend: number,
+  real_portfolio_value: number,
+  year: number,
+  yield_on_cost: string
+}
