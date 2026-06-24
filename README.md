@@ -6,6 +6,7 @@ A full-stack web application for tracking dividend-paying stocks from Trading212
 
 - **Dividend Portfolio Tracking** - Monitor your dividend-paying stocks and their performance
 - **Dashboard Visualizations** - Track dividend trends with interactive charts and metrics
+- **Dividend Projections** - Estimate the return of future dividends
 - **Automated Sync** - Celery background tasks keep your portfolio data up-to-date
 - **Modern Tech Stack** - React + TypeScript frontend, Python Flask backend with async task processing
 
