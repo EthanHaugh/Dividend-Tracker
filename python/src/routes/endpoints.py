@@ -286,13 +286,26 @@ def get_available_tickers():
 
 @dividends_bp.route("/dividend-projection", methods=["GET"])
 def get_dividend_projection():
-    annual_contributions = flask_request.args.get("annual_contributions")
-    reinvest = flask_request.args.get("reinvest", True)
-    years = flask_request.args.get("years", 10)
+    """
+    Project potential portfolio value and dividends for X years
+    """
+
+    # Need this function since URL Params will always evaluate to true
+    # i.e. ...?reinvest=false... will always evaluate to true
+    def is_it_true(value):
+        return value.lower() == "true"
+
+    annual_contributions = int(flask_request.args.get("annual_contributions"))
+    reinvest = bool(flask_request.args.get("reinvest", True, type=is_it_true))
+    years = int(flask_request.args.get("years", 10))
 
     if not annual_contributions:
-        deposits = calculate_average_annual_contributions()
+        annual_contributions = calculate_average_annual_contributions()
 
-    return project_portfolio_dividends(
-        annual_contribution=float(deposits), years=years, reinvest=reinvest
-    ).as_dict()
+    return {
+        "data": project_portfolio_dividends(
+            annual_contribution=float(annual_contributions),
+            years=years,
+            reinvest=reinvest,
+        ).as_dict()
+    }
