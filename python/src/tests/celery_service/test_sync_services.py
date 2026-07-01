@@ -101,20 +101,33 @@ class TestSyncAccountSummary:
         },
     }
 
-    def _setup_query_chain(self, mock_db_session, yearly_total, metadata):
-        """Wire up the two sequential .query() calls the function makes."""
-        query_yearly = MagicMock()
-        query_yearly.scalar.return_value = yearly_total
+    def _setup_query_chain(
+        self, mock_db_session, deposits_total, yearly_total, metadata
+    ):
+        """Wire up the three sequential .query() calls the function makes."""
         query_meta = MagicMock()
         query_meta.first.return_value = metadata
 
-        mock_db_session.query.side_effect = [query_yearly, query_meta]
+        query_deposits = MagicMock()
+        query_deposits.filter.return_value = query_deposits
+        query_deposits.scalar.return_value = deposits_total
+
+        query_yearly = MagicMock()
+        query_yearly.filter.return_value = query_yearly
+        query_yearly.scalar.return_value = yearly_total
+
+        mock_db_session.query.side_effect = [query_meta, query_deposits, query_yearly]
 
     def test_creates_metadata_when_none_exists(self, mock_db_session, mock_requests):
         mock_requests.get.return_value = MagicMock(
             status_code=200, json=lambda: self.SUMMARY_PAYLOAD
         )
-        self._setup_query_chain(mock_db_session, yearly_total=500.0, metadata=None)
+        self._setup_query_chain(
+            mock_db_session,
+            deposits_total=1000.0,
+            yearly_total=500.0,
+            metadata=None,
+        )
 
         sync_account_summary()
 
@@ -127,7 +140,10 @@ class TestSyncAccountSummary:
         )
         existing_metadata = MagicMock()
         self._setup_query_chain(
-            mock_db_session, yearly_total=500.0, metadata=existing_metadata
+            mock_db_session,
+            deposits_total=1000.0,
+            yearly_total=500.0,
+            metadata=existing_metadata,
         )
 
         sync_account_summary()
@@ -154,7 +170,12 @@ class TestSyncAccountSummary:
         mock_requests.get.return_value = MagicMock(
             status_code=200, json=lambda: self.SUMMARY_PAYLOAD
         )
-        self._setup_query_chain(mock_db_session, yearly_total=None, metadata=None)
+        self._setup_query_chain(
+            mock_db_session,
+            deposits_total=1000.0,
+            yearly_total=None,
+            metadata=None,
+        )
 
         sync_account_summary()
 
@@ -163,7 +184,7 @@ class TestSyncAccountSummary:
         created = mock_db_session.add.call_args[0][0]
         assert isinstance(created, AccountMetadata)
         assert created.account_value == Decimal("12000.00")
-        assert created.estimated_deposits == Decimal("9500.00")
+        assert created.estimated_deposits == Decimal("1000.00")
         mock_db_session.commit.assert_called_once()
 
 
