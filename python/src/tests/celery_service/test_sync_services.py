@@ -1,6 +1,8 @@
+from datetime import datetime
 from decimal import Decimal
 from unittest.mock import MagicMock, mock_open, patch
 from celery_service.services.sync_service import (
+    sync_account_transactions,
     sync_open_positions,
     sync_account_summary,
     request_dividend_report,
@@ -12,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 import pytest
 
-from database.models import AccountMetadata
+from database.models import AccountMetadata, TransactionType
 
 
 @pytest.fixture
@@ -401,3 +403,90 @@ class TestSyncCompanyDividends:
         sync_company_dividends()
 
         mock_db_session.commit.assert_called_once()
+
+
+class TestSyncAccountTransactions:
+    ITEM_1 = {
+        "reference": "ref-001",
+        "dateTime": "2024-01-15T10:00:00Z",
+        "amount": 500.0,
+        "type": TransactionType.DEPOSIT,
+    }
+    ITEM_2 = {
+        "reference": "ref-002",
+        "dateTime": "2024-02-20T10:00:00Z",
+        "amount": 250.0,
+        "type": TransactionType.WITHDRAW,
+    }
+
+    SINGLE_PAGE_PAYLOAD = {"items": [ITEM_1, ITEM_2], "nextPagePath": None}
+    PAGE_1_PAYLOAD = {"items": [ITEM_1], "nextPagePath": "limit=50&cursor=abc123"}
+    PAGE_2_PAYLOAD = {"items": [ITEM_2], "nextPagePath": None}
+
+    def test_adds_all_transactions_single_page(self, mock_db_session, mock_requests):
+        mock_requests.get.return_value = MagicMock(
+            status_code=200, json=lambda: self.SINGLE_PAGE_PAYLOAD
+        )
+        mock_db_session.query.return_value.first.return_value = None
+
+        sync_account_transactions()
+
+        assert mock_db_session.add.call_count == 2
+        assert mock_db_session.commit.call_count == 2  # one commit per item
+
+    def test_follows_pagination_until_no_next_page(
+        self, mock_db_session, mock_requests
+    ):
+        page1 = self.PAGE_1_PAYLOAD
+        page2 = self.PAGE_2_PAYLOAD
+        mock_requests.get.side_effect = [
+            MagicMock(status_code=200, json=lambda: page1),
+            MagicMock(status_code=200, json=lambda: page2),
+        ]
+        mock_db_session.query.return_value.first.return_value = None
+
+        sync_account_transactions()
+
+        assert mock_requests.get.call_count == 2
+        assert mock_db_session.add.call_count == 2
+
+    def test_skips_duplicate_transactions_and_continues(
+        self, mock_db_session, mock_requests
+    ):
+        mock_requests.get.return_value = MagicMock(
+            status_code=200, json=lambda: self.SINGLE_PAGE_PAYLOAD
+        )
+        mock_db_session.commit.side_effect = [IntegrityError("", "", ""), None]
+        mock_db_session.query.return_value.first.return_value = None
+
+        sync_account_transactions()
+
+        mock_db_session.rollback.assert_called_once()
+        assert mock_db_session.add.call_count == 2  # second item still attempted
+
+    def test_sets_initial_deposit_date_from_last_item(
+        self, mock_db_session, mock_requests
+    ):
+        mock_requests.get.return_value = MagicMock(
+            status_code=200, json=lambda: self.SINGLE_PAGE_PAYLOAD
+        )
+        existing_metadata = MagicMock()
+        mock_db_session.query.return_value.first.return_value = existing_metadata
+
+        sync_account_transactions()
+
+        expected_date = datetime.fromisoformat("2024-02-20T10:00:00+00:00")
+        assert existing_metadata.initial_deposit_date == expected_date
+        assert mock_db_session.commit.call_count == 3  # 2 items + 1 metadata
+
+    def test_skips_metadata_commit_when_no_metadata_exists(
+        self, mock_db_session, mock_requests
+    ):
+        mock_requests.get.return_value = MagicMock(
+            status_code=200, json=lambda: self.SINGLE_PAGE_PAYLOAD
+        )
+        mock_db_session.query.return_value.first.return_value = None
+
+        sync_account_transactions()
+
+        assert mock_db_session.commit.call_count == 2  # items only, no metadata commit
