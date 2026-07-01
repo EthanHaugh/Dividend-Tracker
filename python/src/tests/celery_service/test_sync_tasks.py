@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import patch
 from celery_service.tasks.sync_tasks import (
     run_task,
+    sync_account_transactions_task,
     sync_dividend_history_task,
     download_dividend_report_task,
     sync_company_dividends_task,
@@ -215,3 +216,17 @@ class TestSyncCompanyDividendsTask:
         ):
             with pytest.raises(RuntimeError, match="db error"):
                 sync_company_dividends_task.run()
+
+
+class TestSyncAccountTransactionTask:
+    def test_calls_sync_account_transactions(self):
+        with patch(f"{TASK_MODULE}.sync_account_transactions") as mock_sync:
+            sync_account_transactions_task.run()
+
+            mock_sync.assert_called_once()
+
+    def test_is_registered_as_celery_task(self):
+        assert (
+            "celery_service.tasks.sync_tasks.sync_account_transactions_task"
+            in celery.tasks
+        )
