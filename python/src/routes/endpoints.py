@@ -8,10 +8,8 @@ from sqlalchemy.orm import Query
 from database.db import db
 from database.models import (
     AccountMetadata,
-    AccountTransactions,
     Company,
     Dividend,
-    TransactionType,
     YearlyDividends,
 )
 from utils.dividend_projection import (
