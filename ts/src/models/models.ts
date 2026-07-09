@@ -24,8 +24,8 @@ export interface ListDividendsResponse {
 export interface DividendPayment {
   ticker: string;
   name: string;
-  total_payments: number;
-  updated_at: string;
+  total_payments: string;
+  last_payment_date: string;
 }
 
 export interface YearlyDividendsResponse {
@@ -47,7 +47,7 @@ export interface ListAvailableTickersResponse {
   data: AvailableTicker[]
 }
 
-interface AvailableTicker {
+export interface AvailableTicker {
   ticker: string;
   name: string;
 }

@@ -84,7 +84,11 @@ export function DividendsTable() {
   }
 
   const handleSelect = (ticker: string) => {
-    setTickers([...tickers, ticker])
+    setTickers((prev) => {
+      const next = [...prev, ticker]
+      setFilters(next)
+      return next
+    })
   }
 
   const handleSelectClear = () => {
@@ -97,6 +101,7 @@ export function DividendsTable() {
       <DividendsTableHeader isLoading={companyTotalsLoading} total_count={companyTotalsData?.total_count || 0} selectOnOpen={handleDropdownSelect} selectOnSelect={handleSelect} searchOnChange={handleSearchChange} selectOnClear={handleSelectClear} />
       <Table
         dataSource={companyTotalsData?.data}
+        data-testid="dividends-table"
         columns={columns}
         className={styles.table}
         rowKey={(row) => row.ticker}

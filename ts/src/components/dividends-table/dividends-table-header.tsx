@@ -16,7 +16,7 @@ export function DividendsTableHeader({ isLoading, total_count, selectOnOpen, sel
     const { data: availableTickersData, isLoading: tickersLoading } = useListAvailableTickers();
 
     return (
-        <Row justify={"space-between"} className={styles.row} gutter={5}>
+        <Row justify={"space-between"} className={styles.row} gutter={5} data-testid="dividends-table-header">
             {isLoading ? <Skeleton /> :
                 <Row align="middle" gutter={5}>
                     <Col>
