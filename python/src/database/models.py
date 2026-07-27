@@ -183,6 +183,7 @@ class TransactionType(str, Enum):
     DEPOSIT = "DEPOSIT"
     FEE = "FEE"
     TRANSFER = "TRANSFER"
+    INTEREST_ON_FREE_CASH = "INTEREST_ON_FREE_CASH"
 
 
 class AccountTransactions(Base, BaseModel):
