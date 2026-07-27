@@ -25,8 +25,8 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
             dividend = Dividend(
                 report_id=report_id,
                 company_id=company.id if company else placeholder_company.id,
-                payment_date=datetime.fromisoformat(row["Time"]),
-                year=datetime.fromisoformat(row["Time"]).year,
+                payment_date=datetime.fromisoformat(row["Time (UTC)"]),
+                year=datetime.fromisoformat(row["Time (UTC)"]).year,
                 total_payment=Decimal(row["Total"]),
                 number_of_shares=row["No. of shares"],
                 currency=row["Currency (Price / share)"],
