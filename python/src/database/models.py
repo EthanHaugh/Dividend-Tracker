@@ -152,6 +152,31 @@ class YearlyDividends(Base, BaseModel):
     __table_args__ = (UniqueConstraint("year", name="uq_yearly_dividends_year"),)
 
 
+class MonthlyDividends(Base, BaseModel):
+    """
+    Aggregated dividend data per month.
+
+    Stores total dividends received for each year/month pair.
+    """
+
+    __tablename__ = "monthly_dividends"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    month: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_dividends: Mapped[Decimal] = mapped_column(
+        Numeric(12, 4), server_default="0.0", nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("year", "month", name="uq_monthly_dividends_year_month"),
+    )
+
+
 class AccountMetadata(Base, BaseModel):
     """
     Portfolio-level metadata and metrics.

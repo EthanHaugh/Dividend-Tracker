@@ -10,6 +10,7 @@ from database.models import (
     AccountMetadata,
     Company,
     Dividend,
+    MonthlyDividends,
     YearlyDividends,
 )
 from utils.dividend_projection import (
@@ -18,6 +19,21 @@ from utils.dividend_projection import (
 )
 
 dividends_bp = Blueprint("dividends", __name__)
+MONTH_LABELS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+MAX_COMPARISON_YEARS = 20
 
 
 # Default type for sort_direction, if a passed value is not of type SortDirection
@@ -81,6 +97,94 @@ def get_yearly_dividends():
 def get_total_dividends():
     total = db.session.query(func.sum(YearlyDividends.total_dividends)).scalar() or 0
     return jsonify({"total_dividends": float(total)}), 200
+
+
+@dividends_bp.route("/monthly-dividends-comparison", methods=["GET"])
+def get_monthly_dividends_comparison():
+    years_param = flask_request.args.get("years", default=None, type=str)
+
+    available_years_query = (
+        db.session.query(MonthlyDividends.year)
+        .distinct(MonthlyDividends.year)
+        .order_by(MonthlyDividends.year.asc())
+        .all()
+    )
+    available_years = [int(row.year) for row in available_years_query]
+
+    if not available_years:
+        return jsonify({"available_years": [], "selected_years": [], "data": []}), 200
+
+    if years_param:
+        try:
+            selected_years = sorted(
+                {
+                    int(year_str)
+                    for year_str in years_param.split(",")
+                    if year_str.strip()
+                }
+            )
+        except ValueError:
+            return jsonify(
+                {"error": "years must be a comma-separated list of integers"}
+            ), 400
+
+        if len(selected_years) > MAX_COMPARISON_YEARS:
+            return (
+                jsonify(
+                    {
+                        "error": f"A maximum of {MAX_COMPARISON_YEARS} years can be requested"
+                    }
+                ),
+                400,
+            )
+
+        invalid_years = [year for year in selected_years if year not in available_years]
+        if invalid_years:
+            return (
+                jsonify(
+                    {
+                        "error": "One or more requested years are unavailable",
+                        "invalid_years": invalid_years,
+                    }
+                ),
+                400,
+            )
+    else:
+        selected_years = available_years
+
+    monthly_rows = (
+        db.session.query(MonthlyDividends)
+        .filter(MonthlyDividends.year.in_(selected_years))
+        .all()
+    )
+
+    totals_lookup = {
+        (row.year, row.month): float(row.total_dividends) for row in monthly_rows
+    }
+
+    response_data = []
+    for month in range(1, 13):
+        values = {
+            str(year): totals_lookup.get((year, month), 0.0) for year in selected_years
+        }
+        response_data.append(
+            {
+                "month": month,
+                "month_label": MONTH_LABELS[month - 1],
+                "values": values,
+            }
+        )
+
+    return (
+        jsonify(
+            {
+                "available_years": available_years,
+                "selected_years": selected_years,
+                "data": response_data,
+            }
+        ),
+        200,
+    )
 
 
 @dividends_bp.route("/account-cash", methods=["GET"])

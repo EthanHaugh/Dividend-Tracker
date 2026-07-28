@@ -106,3 +106,15 @@ interface DividendProjectionYears {
   year: number,
   yield_on_cost: string
 }
+
+export interface MonthlyDividendsComparisonPoint {
+  month: number;
+  month_label: string;
+  values: Record<string, number>;
+}
+
+export interface MonthlyDividendsComparisonResponse {
+  available_years: number[];
+  selected_years: number[];
+  data: MonthlyDividendsComparisonPoint[];
+}

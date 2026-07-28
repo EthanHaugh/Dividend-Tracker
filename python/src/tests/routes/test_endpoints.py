@@ -419,3 +419,90 @@ class TestGetAvailableTickers:
 
         assert response.status_code == 200
         assert response.get_json()["data"] == []
+
+
+class TestGetMonthlyDividendsComparison:
+    @staticmethod
+    def _make_year_row(year):
+        row = MagicMock()
+        row.year = year
+        return row
+
+    @staticmethod
+    def _make_monthly_row(year, month, total):
+        row = MagicMock()
+        row.year = year
+        row.month = month
+        row.total_dividends = total
+        return row
+
+    def test_returns_empty_payload_when_no_monthly_data(self, client, mock_db):
+        available_query = MagicMock()
+        available_query.distinct.return_value.order_by.return_value.all.return_value = []
+        mock_db.query.return_value = available_query
+
+        response = client.get("/monthly-dividends-comparison")
+
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "available_years": [],
+            "selected_years": [],
+            "data": [],
+        }
+
+    def test_returns_zero_filled_month_data_for_selected_years(self, client, mock_db):
+        available_query = MagicMock()
+        available_query.distinct.return_value.order_by.return_value.all.return_value = [
+            self._make_year_row(2023),
+            self._make_year_row(2024),
+        ]
+
+        monthly_query = MagicMock()
+        monthly_query.filter.return_value.all.return_value = [
+            self._make_monthly_row(2023, 1, 10.0),
+            self._make_monthly_row(2024, 1, 20.0),
+            self._make_monthly_row(2024, 2, 5.0),
+        ]
+
+        mock_db.query.side_effect = [available_query, monthly_query]
+
+        response = client.get("/monthly-dividends-comparison?years=2023,2024")
+
+        assert response.status_code == 200
+        body = response.get_json()
+        assert body["available_years"] == [2023, 2024]
+        assert body["selected_years"] == [2023, 2024]
+        assert len(body["data"]) == 12
+
+        january = body["data"][0]
+        february = body["data"][1]
+        assert january["month"] == 1
+        assert january["values"]["2023"] == 10.0
+        assert january["values"]["2024"] == 20.0
+        assert february["values"]["2023"] == 0.0
+        assert february["values"]["2024"] == 5.0
+
+    def test_returns_400_for_invalid_years_param(self, client, mock_db):
+        available_query = MagicMock()
+        available_query.distinct.return_value.order_by.return_value.all.return_value = [
+            self._make_year_row(2024),
+        ]
+        mock_db.query.return_value = available_query
+
+        response = client.get("/monthly-dividends-comparison?years=2024,not-a-year")
+
+        assert response.status_code == 400
+        assert "error" in response.get_json()
+
+    def test_returns_400_for_unavailable_years(self, client, mock_db):
+        available_query = MagicMock()
+        available_query.distinct.return_value.order_by.return_value.all.return_value = [
+            self._make_year_row(2024),
+        ]
+        mock_db.query.return_value = available_query
+
+        response = client.get("/monthly-dividends-comparison?years=2023")
+
+        assert response.status_code == 400
+        body = response.get_json()
+        assert body["invalid_years"] == [2023]

@@ -5,6 +5,7 @@ import {
   ListAvailableTickersResponse,
   ListCompanyDividendsResponse,
   ListDividendsResponse,
+  MonthlyDividendsComparisonResponse,
   PieChartResponse,
   YearlyDividendsResponse,
 } from "../models/models";
@@ -190,4 +191,8 @@ export function useGetDividendProjections(years: number | null, reinvest: boolea
     data: fullData?.data || null,
     ...rest,
   };
+}
+
+export function useGetMonthlyDividendsComparison() {
+  return useFetch<MonthlyDividendsComparisonResponse>(`${BASE_URL}/monthly-dividends-comparison`);
 }

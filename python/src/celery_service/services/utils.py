@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from database.db import db
-from database.models import Company, Dividend, YearlyDividends
+from database.models import Company, Dividend, MonthlyDividends, YearlyDividends
 
 
 def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
@@ -14,6 +14,7 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
     with open(file_path, "r") as file:
         reader = csv.DictReader(file)
         total_count: float = 0.0
+        monthly_totals: dict[tuple[int, int], Decimal] = {}
         for row in reader:
             company = (
                 db.session.query(Company)
@@ -21,13 +22,28 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
                 .one_or_none()
             )
 
-            total_count += float(row["Total"])
+            payment_timestamp = row.get("Time (UTC)") or row.get("Time")
+            if not payment_timestamp:
+                continue
+
+            payment_datetime = datetime.fromisoformat(payment_timestamp)
+            payment_year = payment_datetime.year
+            payment_month = payment_datetime.month
+
+            total_amount = Decimal(row["Total"])
+
+            total_count += float(total_amount)
+            month_key = (payment_year, payment_month)
+            monthly_totals[month_key] = (
+                monthly_totals.get(month_key, Decimal("0")) + total_amount
+            )
+
             dividend = Dividend(
                 report_id=report_id,
                 company_id=company.id if company else placeholder_company.id,
-                payment_date=datetime.fromisoformat(row["Time (UTC)"]),
-                year=datetime.fromisoformat(row["Time (UTC)"]).year,
-                total_payment=Decimal(row["Total"]),
+                payment_date=payment_datetime,
+                year=payment_year,
+                total_payment=total_amount,
                 number_of_shares=row["No. of shares"],
                 currency=row["Currency (Price / share)"],
             )
@@ -58,4 +74,26 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
                 yoy_increase=percentage_increase,
             )
         )
+
+        for (month_year, month), month_total in monthly_totals.items():
+            monthly_dividend = (
+                db.session.query(MonthlyDividends)
+                .filter(
+                    MonthlyDividends.year == month_year,
+                    MonthlyDividends.month == month,
+                )
+                .one_or_none()
+            )
+
+            if monthly_dividend:
+                monthly_dividend.total_dividends = month_total
+            else:
+                db.session.add(
+                    MonthlyDividends(
+                        year=month_year,
+                        month=month,
+                        total_dividends=month_total,
+                    )
+                )
+
         db.session.commit()

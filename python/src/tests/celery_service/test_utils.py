@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from celery_service.services.utils import (
     process_dividend_csv,
 )
-from database.models import Company
+from database.models import Company, MonthlyDividends, YearlyDividends
 
 import pytest
 
@@ -36,6 +36,14 @@ def mock_db_session():
 
 
 class TestProcessDividendCsv:
+    @staticmethod
+    def _find_added_instance(mock_db_session, cls):
+        for call in mock_db_session.add.call_args_list:
+            candidate = call[0][0]
+            if isinstance(candidate, cls):
+                return candidate
+        return None
+
     def _setup_placeholder(self, mock_db_session):
         placeholder = MagicMock()
         placeholder.id = 0
@@ -143,7 +151,8 @@ class TestProcessDividendCsv:
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
-        yearly = mock_db_session.add.call_args_list[-1][0][0]
+        yearly = self._find_added_instance(mock_db_session, YearlyDividends)
+        assert yearly is not None
         assert yearly.yoy_increase == 50.0
 
     def test_yoy_increase_is_zero_when_no_previous_year(self, mock_db_session):
@@ -160,7 +169,8 @@ class TestProcessDividendCsv:
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
-        yearly = mock_db_session.add.call_args_list[-1][0][0]
+        yearly = self._find_added_instance(mock_db_session, YearlyDividends)
+        assert yearly is not None
         assert yearly.yoy_increase == 0.0
 
     def test_yoy_increase_is_zero_when_previous_year_total_is_zero(
@@ -171,8 +181,12 @@ class TestProcessDividendCsv:
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
-        # first one_or_none = company lookup, second = previous year
-        query_mock.filter.return_value.one_or_none.side_effect = [None, previous_year]
+        # one_or_none calls: company lookup, previous year, monthly upsert
+        query_mock.filter.return_value.one_or_none.side_effect = [
+            None,
+            previous_year,
+            None,
+        ]
 
         mock_db_session.query.return_value = query_mock
 
@@ -181,7 +195,8 @@ class TestProcessDividendCsv:
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
-        yearly = mock_db_session.add.call_args_list[-1][0][0]
+        yearly = self._find_added_instance(mock_db_session, YearlyDividends)
+        assert yearly is not None
         assert yearly.yoy_increase == 0.0
 
     def test_commits_after_all_rows_processed(self, mock_db_session):
@@ -221,7 +236,8 @@ class TestProcessDividendCsv:
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
-        yearly = mock_db_session.add.call_args_list[-1][0][0]
+        yearly = self._find_added_instance(mock_db_session, YearlyDividends)
+        assert yearly is not None
         assert yearly.year == 2024
         assert yearly.total_dividends == 100.0
 
@@ -258,7 +274,8 @@ class TestProcessDividendCsv:
             process_dividend_csv("dividends.csv", report_id=42, year=2024)
 
         # No dividends added for an empty CSV — only YearlyDividends
-        yearly = mock_db_session.add.call_args_list[0][0][0]
+        yearly = self._find_added_instance(mock_db_session, YearlyDividends)
+        assert yearly is not None
         assert yearly.year == 2024
 
     def test_empty_csv_adds_yearly_dividends_with_zero_total(self, mock_db_session):
@@ -277,3 +294,55 @@ class TestProcessDividendCsv:
         yearly = mock_db_session.add.call_args_list[0][0][0]
         assert yearly.total_dividends == 0.0
         assert yearly.yoy_increase == 0.0
+
+    def test_adds_monthly_dividends_for_each_month(self, mock_db_session):
+        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+
+        query_mock = MagicMock()
+        query_mock.filter.return_value.one.return_value = placeholder
+        query_mock.filter.return_value.one_or_none.return_value = None
+
+        mock_db_session.query.return_value = query_mock
+
+        csv_content = make_csv(
+            {"Time": "2024-01-15T00:00:00", "Total": "10.00"},
+            {"Time": "2024-01-28T00:00:00", "Total": "5.00"},
+            {"Time": "2024-02-10T00:00:00", "Total": "7.00"},
+        )
+
+        with patch("builtins.open", return_value=io.StringIO(csv_content)):
+            process_dividend_csv("dividends.csv", report_id=1, year=2024)
+
+        monthly_rows = [
+            call[0][0]
+            for call in mock_db_session.add.call_args_list
+            if isinstance(call[0][0], MonthlyDividends)
+        ]
+
+        assert len(monthly_rows) == 2
+        jan_row = next(row for row in monthly_rows if row.month == 1)
+        feb_row = next(row for row in monthly_rows if row.month == 2)
+        assert jan_row.total_dividends == 15.0
+        assert feb_row.total_dividends == 7.0
+
+    def test_updates_existing_monthly_dividends_when_row_exists(self, mock_db_session):
+        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        previous_year = None
+        existing_monthly = MagicMock(year=2024, month=1, total_dividends=Decimal("0"))
+
+        query_mock = MagicMock()
+        query_mock.filter.return_value.one.return_value = placeholder
+        query_mock.filter.return_value.one_or_none.side_effect = [
+            None,
+            previous_year,
+            existing_monthly,
+        ]
+
+        mock_db_session.query.return_value = query_mock
+
+        csv_content = make_csv({"Time": "2024-01-15T00:00:00", "Total": "25.00"})
+
+        with patch("builtins.open", return_value=io.StringIO(csv_content)):
+            process_dividend_csv("dividends.csv", report_id=1, year=2024)
+
+        assert existing_monthly.total_dividends == 25.0

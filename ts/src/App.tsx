@@ -26,6 +26,7 @@ import { useHealthCheck, useUpdateCurrentYearDividends } from "./hooks/api.hooks
 import { useState } from "react";
 import dayjs from "dayjs";
 import { DividendProjectionsChart } from "./components/projection-chart/projection-chart";
+import { MonthlyIncomeComparisonChart } from "./components/monthly-income-comparison/monthly-income-comparison";
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -118,6 +119,8 @@ function App() {
             </Row>
             <Divider className="my-4" />
             <DividendProjectionsChart />
+            <Divider className="my-4" />
+            <MonthlyIncomeComparisonChart />
             <Divider className="my-4" />
             <Row>
               <DividendsTable />

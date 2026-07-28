@@ -1,0 +1,11 @@
+.controlLabel {
+    font-size: 11px;
+}
+
+.controlInput {
+    width: 100%;
+}
+
+.title {
+    margin-bottom: 0 !important;
+}
