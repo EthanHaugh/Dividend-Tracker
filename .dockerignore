@@ -1,0 +1,17 @@
+.git
+.github
+.vscode
+.env
+.env.*
+*.pyc
+__pycache__/
+coverage/
+htmlcov/
+node_modules/
+ts/node_modules/
+ts/build/
+python/.venv/
+python/src/instance/
+python/src/celerybeat*
+dump.rdb
+*.db

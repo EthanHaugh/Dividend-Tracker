@@ -7,12 +7,9 @@ import {
   Row,
   Divider,
   Col,
-  Space,
-  DatePicker,
-  message,
   Spin,
   Result,
-  Button,
+  Tag,
 } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import styles from "./App.module.css";
@@ -22,40 +19,14 @@ import HeaderCards from "./components/header-cards/header-cards";
 import DonutChart from "./components/pie-chart/pie-chart";
 import { DividendsTable } from "./components/dividends-table/dividends-table";
 import LineChart from "./components/line-chart/line-chart";
-import { useHealthCheck, useUpdateCurrentYearDividends } from "./hooks/api.hooks";
-import { useState } from "react";
-import dayjs from "dayjs";
+import { useHealthCheck } from "./hooks/api.hooks";
 import { DividendProjectionsChart } from "./components/projection-chart/projection-chart";
 import { MonthlyIncomeComparisonChart } from "./components/monthly-income-comparison/monthly-income-comparison";
+import { DEMO_MODE } from "./hooks/consts";
+import RefreshControls from "./components/refresh-controls/refresh-controls";
 
 function App() {
-  const [messageApi, contextHolder] = message.useMessage();
   const { statusCode: healthStatusCode, isLoading: healthStatusLoading } = useHealthCheck()
-  const [year, setYear] = useState<number | undefined>(
-    new Date().getFullYear(),
-  );
-
-  const handleJobQueued = () => {
-    messageApi.success('Job Queued! This will take a few minutes...')
-  }
-  const { mutate: updateDividends, isLoading: isUpdating } =
-    useUpdateCurrentYearDividends(handleJobQueued);
-
-  const handleRefresh = () => {
-    updateDividends(year);
-  };
-
-  const handleDateChange = (date: dayjs.Dayjs | null) => {
-    if (date) {
-      setYear(date.year());
-    } else {
-      setYear(undefined);
-    }
-  };
-
-  const disabledDate = (current: dayjs.Dayjs) => {
-    return current && current > dayjs().endOf("year");
-  };
 
   return (
     <ConfigProvider
@@ -71,7 +42,6 @@ function App() {
         },
       }}
     >
-      {contextHolder}
       {healthStatusLoading ? (
         <div className={styles.spinnerContainer}>
           <Spin size="large" />
@@ -89,20 +59,10 @@ function App() {
                 <Typography.Title level={3} style={{ margin: 0 }}>
                   Dividend Tracker
                 </Typography.Title>
+                {DEMO_MODE && <Tag color="blue">Synthetic demo</Tag>}
               </div>
               <span>
-                <Space.Compact>
-                  <Button onClick={handleRefresh} loading={isUpdating}>
-                    Refresh
-                  </Button>
-                  <DatePicker
-                    picker="year"
-                    placeholder="Select year"
-                    disabledDate={disabledDate}
-                    value={year ? dayjs().year(year) : null}
-                    onChange={handleDateChange}
-                  />
-                </Space.Compact>
+                {!DEMO_MODE && <RefreshControls />}
               </span>
             </Row>
             <Divider className={styles.divider} />

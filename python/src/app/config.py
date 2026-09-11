@@ -1,10 +1,12 @@
 import os
+
 from celery.schedules import crontab
 from sqlalchemy import NullPool, QueuePool
 
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
     # Assign Celery Broker to Redis
     CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
@@ -56,7 +58,9 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "").replace(
+        "postgresql://", "postgresql+psycopg://", 1
+    )
 
     SQLALCHEMY_ENGINE_OPTIONS = {
         "poolclass": QueuePool,

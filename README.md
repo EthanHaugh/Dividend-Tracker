@@ -2,6 +2,10 @@
 
 A full-stack web application for tracking dividend-paying stocks from Trading212 specifically, with automated data synchronization and portfolio analytics.
 
+## [Live Demo](https://dividend-tracker-demo.3kf1xrqqy44a8.us-east-1.cs.amazonlightsail.com/)
+
+The public demo is read-only and uses demo data.
+
 ## Features
 
 - **Dividend Portfolio Tracking** - Monitor your dividend-paying stocks and their performance
