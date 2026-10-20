@@ -15,18 +15,11 @@ export default function RefreshControls() {
     };
 
     const handleDateChange = (date: dayjs.Dayjs | null) => {
-        // TODO: Refactor - Make this more idiomatic
-        if (date) {
-            setYear(date.year());
-        } else {
-            setYear(undefined);
-        }
+        setYear(date ? date.year() : undefined)
     };
 
-    // TODO: Refactor - Remove curly braces and return
-    const disabledDate = (current: dayjs.Dayjs) => {
-        return current && current > dayjs().endOf("year");
-    };
+    const disabledDate = (current: dayjs.Dayjs) =>
+        current && current > dayjs().endOf("year");
 
     return (
         <Space.Compact>
