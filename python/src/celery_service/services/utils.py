@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from database.db import db
@@ -27,6 +27,11 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
                 continue
 
             payment_datetime = datetime.fromisoformat(payment_timestamp)
+            if payment_datetime.tzinfo is None:
+                payment_datetime = payment_datetime.replace(tzinfo=UTC)
+            else:
+                payment_datetime = payment_datetime.astimezone(UTC)
+
             payment_year = payment_datetime.year
             payment_month = payment_datetime.month
 

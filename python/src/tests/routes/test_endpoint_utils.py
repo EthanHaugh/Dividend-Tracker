@@ -12,7 +12,7 @@ class TestEndOfOrToday:
     def test_input_year_current_year(self):
         result = end_of_or_today(datetime.now(tz=UTC).date().year)
 
-        assert result == str(datetime.now(tz=UTC))
+        assert result == str(datetime.now(tz=UTC).date())
 
     def test_input_year_greater_than_current_year(self):
         # No matter how far in advance the function,
