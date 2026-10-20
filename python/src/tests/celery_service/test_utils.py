@@ -3,12 +3,11 @@ from datetime import datetime
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
+import pytest
 from celery_service.services.utils import (
     process_dividend_csv,
 )
 from database.models import Company, MonthlyDividends, YearlyDividends
-
-import pytest
 
 MODULE = "celery_service.services.utils"
 
@@ -47,7 +46,7 @@ class TestProcessDividendCsv:
     def _setup_placeholder(self, mock_db_session):
         placeholder = MagicMock()
         placeholder.id = 0
-        placeholder.total_payments = Decimal("0")
+        placeholder.total_payments = Decimal(0)
         mock_db_session.query.return_value.filter.return_value.one.return_value = (
             placeholder
         )
@@ -57,7 +56,7 @@ class TestProcessDividendCsv:
         mock_db_session.query.return_value.filter.return_value.one_or_none.return_value = company
 
     def test_adds_dividend_for_known_company(self, mock_db_session):
-        known_company = MagicMock(id=1, total_payments=Decimal("0"))
+        known_company = MagicMock(id=1, total_payments=Decimal(0))
         placeholder = self._setup_placeholder(mock_db_session)
 
         query_mock = MagicMock()
@@ -76,7 +75,7 @@ class TestProcessDividendCsv:
         assert added.total_payment == Decimal("15.00")
 
     def test_falls_back_to_placeholder_for_unknown_company(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -94,7 +93,7 @@ class TestProcessDividendCsv:
 
     def test_accumulates_total_payments_on_company(self, mock_db_session):
         known_company = MagicMock(id=1, total_payments=Decimal("10.00"))
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -113,7 +112,7 @@ class TestProcessDividendCsv:
         assert known_company.total_payments == Decimal("22.00")
 
     def test_accumulates_payments_on_placeholder_for_unknown(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -132,7 +131,7 @@ class TestProcessDividendCsv:
         assert placeholder.total_payments == Decimal("7.00")
 
     def test_calculates_yoy_increase_correctly(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
         previous_year = MagicMock(total_dividends=Decimal("100.00"))
 
         def query_side_effect(model):
@@ -156,7 +155,7 @@ class TestProcessDividendCsv:
         assert yearly.yoy_increase == 50.0
 
     def test_yoy_increase_is_zero_when_no_previous_year(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -176,8 +175,8 @@ class TestProcessDividendCsv:
     def test_yoy_increase_is_zero_when_previous_year_total_is_zero(
         self, mock_db_session
     ):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
-        previous_year = MagicMock(total_dividends=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
+        previous_year = MagicMock(total_dividends=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -200,7 +199,7 @@ class TestProcessDividendCsv:
         assert yearly.yoy_increase == 0.0
 
     def test_commits_after_all_rows_processed(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -220,7 +219,7 @@ class TestProcessDividendCsv:
         mock_db_session.commit.assert_called_once()
 
     def test_adds_yearly_dividends_row_with_correct_totals(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -242,7 +241,7 @@ class TestProcessDividendCsv:
         assert yearly.total_dividends == 100.0
 
     def test_dividend_payment_date_parsed_correctly(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -260,7 +259,7 @@ class TestProcessDividendCsv:
         assert dividend.year == 2024
 
     def test_dividend_uses_correct_report_id(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -279,7 +278,7 @@ class TestProcessDividendCsv:
         assert yearly.year == 2024
 
     def test_empty_csv_adds_yearly_dividends_with_zero_total(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -296,7 +295,7 @@ class TestProcessDividendCsv:
         assert yearly.yoy_increase == 0.0
 
     def test_adds_monthly_dividends_for_each_month(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder
@@ -326,9 +325,9 @@ class TestProcessDividendCsv:
         assert feb_row.total_dividends == 7.0
 
     def test_updates_existing_monthly_dividends_when_row_exists(self, mock_db_session):
-        placeholder = MagicMock(id=0, total_payments=Decimal("0"))
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
         previous_year = None
-        existing_monthly = MagicMock(year=2024, month=1, total_dividends=Decimal("0"))
+        existing_monthly = MagicMock(year=2024, month=1, total_dividends=Decimal(0))
 
         query_mock = MagicMock()
         query_mock.filter.return_value.one.return_value = placeholder

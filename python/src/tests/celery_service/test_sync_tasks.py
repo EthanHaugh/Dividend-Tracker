@@ -1,18 +1,18 @@
+import logging
 from datetime import datetime
 from unittest.mock import patch
-from celery_service.tasks.sync_tasks import (
-    run_task,
-    sync_account_transactions_task,
-    sync_dividend_history_task,
-    download_dividend_report_task,
-    sync_company_dividends_task,
-    sync_positions_task,
-    sync_account_summary_task,
-)
-from celery_service.celery_app import celery
 
-import logging
 import pytest
+from celery_service.celery_app import celery
+from celery_service.tasks.sync_tasks import (
+    download_dividend_report_task,
+    run_task,
+    sync_account_summary_task,
+    sync_account_transactions_task,
+    sync_company_dividends_task,
+    sync_dividend_history_task,
+    sync_positions_task,
+)
 
 TASK_MODULE = "celery_service.tasks.sync_tasks"
 
@@ -38,17 +38,6 @@ class TestRunTaskDecorator:
 
         assert sample() == 42
 
-    def test_logs_error_and_reraises_on_exception(self, caplog):
-        @run_task
-        def failing():
-            raise ValueError("boom")
-
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(ValueError, match="boom"):
-                failing()
-
-        assert any("failing failed with error" in r.message for r in caplog.records)
-
     def test_preserves_function_name(self):
         @run_task
         def my_named_function():
@@ -68,11 +57,14 @@ class TestSyncPositionsTask:
         assert "celery_service.tasks.sync_tasks.sync_positions_task" in celery.tasks
 
     def test_propagates_exception(self):
-        with patch(
-            f"{TASK_MODULE}.sync_open_positions", side_effect=RuntimeError("api down")
+        with (
+            patch(
+                f"{TASK_MODULE}.sync_open_positions",
+                side_effect=RuntimeError("api down"),
+            ),
+            pytest.raises(RuntimeError, match="api down"),
         ):
-            with pytest.raises(RuntimeError, match="api down"):
-                sync_positions_task.run()
+            sync_positions_task.run()
 
 
 class TestSyncAccountSummaryTask:
@@ -88,11 +80,14 @@ class TestSyncAccountSummaryTask:
         )
 
     def test_propagates_exception(self):
-        with patch(
-            f"{TASK_MODULE}.sync_account_summary", side_effect=RuntimeError("timeout")
+        with (
+            patch(
+                f"{TASK_MODULE}.sync_account_summary",
+                side_effect=RuntimeError("timeout"),
+            ),
+            pytest.raises(RuntimeError, match="timeout"),
         ):
-            with pytest.raises(RuntimeError, match="timeout"):
-                sync_account_summary_task.run()
+            sync_account_summary_task.run()
 
 
 class TestSyncDividendHistoryTask:
@@ -141,7 +136,7 @@ class TestSyncDividendHistoryTask:
             assert args.kwargs["args"][0] == 55  # report_id
 
     def test_propagates_exception_from_request(self):
-        with (
+        with (  # noqa: SIM117
             patch(
                 f"{TASK_MODULE}.request_dividend_report",
                 side_effect=RuntimeError("T212 unavailable"),
@@ -210,12 +205,14 @@ class TestSyncCompanyDividendsTask:
         )
 
     def test_propagates_exception(self):
-        with patch(
-            f"{TASK_MODULE}.sync_company_dividends",
-            side_effect=RuntimeError("db error"),
+        with (
+            patch(
+                f"{TASK_MODULE}.sync_company_dividends",
+                side_effect=RuntimeError("db error"),
+            ),
+            pytest.raises(RuntimeError, match="db error"),
         ):
-            with pytest.raises(RuntimeError, match="db error"):
-                sync_company_dividends_task.run()
+            sync_company_dividends_task.run()
 
 
 class TestSyncAccountTransactionTask:

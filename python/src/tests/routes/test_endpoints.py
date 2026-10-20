@@ -2,7 +2,6 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from app import create_app
 from database.models import Company
 from routes.endpoints import SortDirection, _sort_query, _vaidate_sort_by
@@ -29,10 +28,9 @@ def client(app):
 
 @pytest.fixture
 def mock_db(app):
-    with app.app_context():
-        with patch(f"{MODULE}.db") as mock:
-            mock.session = MagicMock()
-            yield mock.session
+    with app.app_context(), patch(f"{MODULE}.db") as mock:
+        mock.session = MagicMock()
+        yield mock.session
 
 
 def make_company(**kwargs):

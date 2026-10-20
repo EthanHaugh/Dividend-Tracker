@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from functools import wraps
+
 from celery_service.celery_app import celery
 from celery_service.services.sync_service import (
     download_and_process_report,
@@ -22,8 +23,8 @@ def run_task(func):
             result = func(*args, **kwargs)
             logger.info(f"{func.__name__} completed successfully")
             return result
-        except Exception as e:
-            logger.error(f"{func.__name__} failed with error: {e}", exc_info=True)
+        except Exception:
+            logger.exception(f"{func.__name__} failed")
             raise
 
     return wrapper

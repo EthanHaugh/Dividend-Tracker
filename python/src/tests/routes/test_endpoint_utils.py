@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
 from utils.endpoint_utils import end_of_or_today
 

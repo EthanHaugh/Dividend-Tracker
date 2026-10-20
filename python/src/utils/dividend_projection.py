@@ -336,7 +336,7 @@ def calculate_dividend_growth_rate(
     growth_by_year: dict[int, list[float]] = defaultdict(list)
     companies_used = 0
 
-    for company_id, year_dps in dps_by_company_year.items():
+    for year_dps in dps_by_company_year.values():
         years = sorted(year_dps.keys())
         if len(years) < 3:
             # not enough history for a reliable transition
@@ -569,9 +569,8 @@ def project_portfolio_dividends(
 if __name__ == "__main__":
     import json
 
-    from flask import Flask
-
     from app.config import config
+    from flask import Flask
 
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config["DEVELOPMENT"])

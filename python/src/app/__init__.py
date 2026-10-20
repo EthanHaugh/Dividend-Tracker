@@ -67,7 +67,7 @@ def create_app(env: str | None = None) -> Flask:
 
     if not env:
         env = os.environ.get("FLASK_ENV", "PRODUCTION")
-    app.config.from_object(config[env])
+    app.config.from_object(config[env]())
     app.config["DEMO_MODE"] = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
     validate_config(app.config)

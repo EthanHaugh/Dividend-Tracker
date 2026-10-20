@@ -1,6 +1,8 @@
-from celery_service.tasks.sync_tasks import sync_dividend_history_task
-from flask import Blueprint, jsonify, request as flask_request
 import logging
+
+from celery_service.tasks.sync_tasks import sync_dividend_history_task
+from flask import Blueprint, jsonify
+from flask import request as flask_request
 
 logger = logging.getLogger(__name__)
 updates_bp = Blueprint("updates", __name__)

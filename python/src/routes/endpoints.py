@@ -1,9 +1,4 @@
 from enum import Enum
-from flask_sqlalchemy.model import Model
-from flask import Blueprint, jsonify
-from flask import request as flask_request
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Query
 
 from database.db import db
 from database.models import (
@@ -13,6 +8,11 @@ from database.models import (
     MonthlyDividends,
     YearlyDividends,
 )
+from flask import Blueprint, jsonify
+from flask import request as flask_request
+from flask_sqlalchemy.model import Model
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Query
 from utils.dividend_projection import (
     calculate_average_annual_contributions,
     project_portfolio_dividends,
@@ -46,11 +46,7 @@ class SortDirection(Enum):
 def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:
     """Validate `sort_by` parameter to avoid SQL Injection"""
 
-    if sort_by:
-        if sort_by not in allowed_sort_fields:
-            return False
-
-    return True
+    return not (sort_by and sort_by not in allowed_sort_fields)
 
 
 def _sort_query(
@@ -109,7 +105,7 @@ def get_monthly_dividends_comparison():
         .order_by(MonthlyDividends.year.asc())
         .all()
     )
-    available_years = [int(row.year) for row in available_years_query]
+    available_years = [row.year for row in available_years_query]
 
     if not available_years:
         return jsonify({"available_years": [], "selected_years": [], "data": []}), 200
@@ -198,7 +194,7 @@ def get_account_cash():
 @dividends_bp.route("/pie-chart", methods=["GET"])
 def get_pie_chart_data():
     """List total dividends by company for the pie chart with percentage contribution."""
-    query = (
+    company_totals = (
         db.session.query(
             Dividend.company_id,
             Company.name,
@@ -208,17 +204,17 @@ def get_pie_chart_data():
         .join(Company)
         .group_by(Dividend.company_id)
         .order_by(func.sum(Dividend.total_payment).desc())
+    ).all()
+
+    total_dividends = (
+        sum(float(r.total_payment) for r in company_totals) if company_totals else 0
     )
 
-    results = query.all()
-
-    total_dividends = sum(float(r.total_payment) for r in results) if results else 0
-
     data = []
-    for r in results:
-        item = r._asdict()
+    for company_total in company_totals:
+        item = company_total._asdict()
         percentage = (
-            (float(r.total_payment) / total_dividends * 100)
+            (float(company_total.total_payment) / total_dividends * 100)
             if total_dividends > 0
             else 0
         )
@@ -324,7 +320,7 @@ def list_company_dividends():
 
     if not ticker:
         return (
-            jsonify({"error": "Query string parameter, ticker, is required"}),
+            jsonify({"error": "Missing required query string parameter: ticker"}),
             400,
         )
 
@@ -394,11 +390,11 @@ def get_dividend_projection():
 
     # Need this function since URL Params will always evaluate to true
     # i.e. ...?reinvest=false... will always evaluate to true
-    def is_it_true(value):
+    def is_true(value):
         return value.lower() == "true"
 
     annual_contributions = int(flask_request.args.get("annual_contributions"))
-    reinvest = bool(flask_request.args.get("reinvest", True, type=is_it_true))
+    reinvest = bool(flask_request.args.get("reinvest", True, type=is_true))
     years = int(flask_request.args.get("years", 10))
 
     if not annual_contributions:

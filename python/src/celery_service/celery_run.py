@@ -1,6 +1,7 @@
 from app import create_app
-from celery_service.celery_app import celery, init_celery
 from celery.signals import worker_process_init
+
+from celery_service.celery_app import celery, init_celery
 
 app = create_app()
 init_celery(app)

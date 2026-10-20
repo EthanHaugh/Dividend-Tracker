@@ -35,7 +35,7 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
             total_count += float(total_amount)
             month_key = (payment_year, payment_month)
             monthly_totals[month_key] = (
-                monthly_totals.get(month_key, Decimal("0")) + total_amount
+                monthly_totals.get(month_key, Decimal(0)) + total_amount
             )
 
             dividend = Dividend(

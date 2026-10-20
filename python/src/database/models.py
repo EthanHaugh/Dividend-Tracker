@@ -2,18 +2,19 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import (
-    Integer,
-    String,
-    Numeric,
     Date,
     DateTime,
     ForeignKey,
+    Integer,
+    Numeric,
+    String,
     UniqueConstraint,
     func,
 )
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from database.db import Base
 
 
@@ -50,7 +51,7 @@ class Company(Base, BaseModel):
     total_payments: Mapped[Decimal] = mapped_column(
         Numeric(14, 4),
         nullable=False,
-        default=Decimal("0"),
+        default=Decimal(0),
     )
 
     # Relationships

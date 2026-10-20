@@ -1,16 +1,9 @@
+import logging
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
-import os
+
 import requests
-import logging
-
-from sqlalchemy import delete, extract, func
-from sqlalchemy.exc import IntegrityError
-from celery_service.services.utils import (
-    process_dividend_csv,
-)
-
-from database.db import db
 from consts.consts import (
     GENERATE_REPORT_URL,
     REQUEST_HEADERS,
@@ -19,6 +12,7 @@ from consts.consts import (
     RETRIEVE_OPEN_POSITIONS_URL,
     RETRIEVE_REPORT_URL,
 )
+from database.db import db
 from database.models import (
     AccountMetadata,
     AccountTransactions,
@@ -29,8 +23,13 @@ from database.models import (
     YearlyDividends,
 )
 from models.classes import AccountSummaryResponse, DividendHistory
+from sqlalchemy import delete, extract, func
+from sqlalchemy.exc import IntegrityError
 from utils.endpoint_utils import end_of_or_today
 
+from celery_service.services.utils import (
+    process_dividend_csv,
+)
 
 logger = logging.getLogger(__name__)
 
