@@ -1,5 +1,5 @@
 import io
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -255,7 +255,7 @@ class TestProcessDividendCsv:
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
         dividend = mock_db_session.add.call_args_list[0][0][0]
-        assert dividend.payment_date == datetime(2024, 6, 15, 12, 30, 0)
+        assert dividend.payment_date == datetime(2024, 6, 15, 12, 30, 0, tzinfo=UTC)
         assert dividend.year == 2024
 
     def test_dividend_uses_correct_report_id(self, mock_db_session):

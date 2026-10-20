@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, datetime
 
 from utils.endpoint_utils import end_of_or_today
 
@@ -10,13 +10,13 @@ class TestEndOfOrToday:
         assert result == "2020-12-31"
 
     def test_input_year_current_year(self):
-        result = end_of_or_today(datetime.now().year)
+        result = end_of_or_today(datetime.now(tz=UTC).date().year)
 
-        assert result == str(date.today())
+        assert result == str(datetime.now(tz=UTC))
 
     def test_input_year_greater_than_current_year(self):
         # No matter how far in advance the function,
         # we should always get the todays date.
-        result = end_of_or_today(datetime.now().year + 10)
+        result = end_of_or_today(datetime.now(tz=UTC).year + 10)
 
-        assert result == str(date.today())
+        assert result == str(datetime.now(tz=UTC).date())

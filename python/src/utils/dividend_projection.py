@@ -32,7 +32,7 @@ contributions).
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from database import db
 from database.models import (
@@ -289,7 +289,7 @@ def calculate_capital_growth_rate(
     if not deposits:
         return 0.0
 
-    today = date.today()
+    today = datetime.now(tz=UTC).date()
     cash_flows = [
         (d.transaction_date.date(), -float(d.transaction_amount)) for d in deposits
     ]
@@ -318,7 +318,7 @@ def calculate_dividend_growth_rate(
     if not dividends:
         return GrowthRateResult(rate=0.0, companies_used=0, years_used=[])
 
-    current_year = date.today().year
+    current_year = datetime.now(tz=UTC).date().year
 
     dps_by_company_year: dict[int, dict[int, float]] = defaultdict(
         lambda: defaultdict(float)
@@ -400,7 +400,7 @@ def calculate_current_yield(portfolio_value: float | None = None) -> float:
     if portfolio_value <= 0:
         return 0.0
 
-    cutoff_date = date.today() - timedelta(days=365)
+    cutoff_date = datetime.now(tz=UTC).date() - timedelta(days=365)
 
     ttm_dividends = (
         db.session.query(Dividend).filter(Dividend.payment_date >= cutoff_date).all()
@@ -442,7 +442,7 @@ def calculate_average_annual_contributions() -> float:
     total_contributed = sum(float(c.transaction_amount) for c in contributions)
 
     first_contribution_date = min(c.transaction_date.date() for c in contributions)
-    years_span = (date.today() - first_contribution_date).days / 365.0
+    years_span = (datetime.now(tz=UTC).date() - first_contribution_date).days / 365.0
 
     if years_span <= 0:
         # All contributions happened today / first contribution is today -

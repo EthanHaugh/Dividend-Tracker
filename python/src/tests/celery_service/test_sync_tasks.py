@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -100,7 +100,7 @@ class TestSyncDividendHistoryTask:
         ):
             sync_dividend_history_task.run(year=None)
 
-            mock_request.assert_called_once_with(datetime.now().year)
+            mock_request.assert_called_once_with(datetime.now(tz=UTC).date().year)
 
     def test_uses_provided_year(self):
         with (

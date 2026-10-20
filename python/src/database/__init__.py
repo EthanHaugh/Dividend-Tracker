@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from database.db import db
 from database.models import Company
@@ -18,7 +18,7 @@ def ensure_placeholder_company():
             ticker="UNKNOWN",
             name="Closed/Unknown Position",
             quantity=0.0,
-            initial_buy_date=datetime(2000, 1, 1).date(),
+            initial_buy_date=datetime(2000, 1, 1, tzinfo=UTC).date(),
             average_buy_price=0.0,
             total_payments=0.0,
         )

@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import requests
@@ -97,7 +97,7 @@ def sync_account_summary() -> None:
         .filter(AccountTransactions.transaction_type != TransactionType.FEE)
         .scalar()
     )
-    one_year_ago = datetime.now() - timedelta(days=365)
+    one_year_ago = datetime.now(tz=UTC).date() - timedelta(days=365)
     estimated_yearly_contribution = (
         db.session.query(
             func.coalesce(func.sum(AccountTransactions.transaction_amount), 0)
@@ -208,7 +208,7 @@ def download_and_process_report(report_id: int, year: int) -> None:
                 report_id=dividend_history.reportId,
                 time_from=datetime.fromisoformat(dividend_history.timeFrom),
                 time_to=datetime.fromisoformat(dividend_history.timeTo),
-                created_at=datetime.now(),
+                created_at=datetime.now(tz=UTC).date(),
             )
         )
         db.session.commit()
@@ -251,8 +251,8 @@ def sync_account_transactions() -> None:
                             transaction_date=datetime.fromisoformat(
                                 item["dateTime"].replace("Z", "+00:00")
                             ),
-                            created_at=datetime.now(),
-                            updated_at=datetime.now(),
+                            created_at=datetime.now(tz=UTC).date(),
+                            updated_at=datetime.now(tz=UTC).date(),
                             transaction_amount=item["amount"],
                             transaction_type=TransactionType[item["type"]],
                         )

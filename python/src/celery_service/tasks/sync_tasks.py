@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import wraps
 
 from celery_service.celery_app import celery
@@ -79,7 +79,7 @@ def sync_dividend_history_task(year: int | None = None):
     working locking up on long running task
     """
     if year is None:
-        year = datetime.now().year
+        year = datetime.now(tz=UTC).date().year
     report_id = request_dividend_report(year)
     download_dividend_report_task.apply_async(
         args=[report_id, year],
