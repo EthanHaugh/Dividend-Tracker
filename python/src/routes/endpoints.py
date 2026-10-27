@@ -1,5 +1,3 @@
-from enum import Enum
-
 from database.db import db
 from database.models import (
     AccountMetadata,
@@ -11,6 +9,16 @@ from database.models import (
 from flask import Blueprint, jsonify
 from flask import request as flask_request
 from flask_sqlalchemy.model import Model
+from models.endpoints.endpoints import (
+    DividendProjectionParams,
+    ListAvailableTickersParams,
+    ListCompanyDividendsParams,
+    ListCompanyTotalsParams,
+    MonthlyDividendComparisonParams,
+    SortDirection,
+    YearlyDividendsParams,
+)
+from pydantic import ValidationError
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Query
 from utils.dividend_projection import (
@@ -34,13 +42,6 @@ MONTH_LABELS = [
     "Dec",
 ]
 MAX_COMPARISON_YEARS = 20
-
-
-# Default type for sort_direction, if a passed value is not of type SortDirection
-# the flask_request.args.get() with return the default value
-class SortDirection(Enum):
-    ASCENDING = "ascend"
-    DESCENDING = "descend"
 
 
 def _vaidate_sort_by(sort_by: str, allowed_sort_fields: str) -> bool:
@@ -75,10 +76,13 @@ def health_check():
 def get_yearly_dividends():
     query = db.session.query(YearlyDividends).order_by(YearlyDividends.year.asc())
 
-    year_str = flask_request.args.get("year")
-    year = int(year_str) if year_str else None
-    if year:
-        query = query.filter(YearlyDividends.year == year).one_or_none()
+    try:
+        params = YearlyDividendsParams(**flask_request.args.to_dict())
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
+
+    if params.year:
+        query = query.filter(YearlyDividends.year == params.year).one_or_none()
         if not query:
             return jsonify({"error": "No yearly dividends found"}), 404
         return (
@@ -97,7 +101,12 @@ def get_total_dividends():
 
 @dividends_bp.route("/monthly-dividends-comparison", methods=["GET"])
 def get_monthly_dividends_comparison():
-    years_param = flask_request.args.get("years", default=None, type=str)
+    data = {"years": flask_request.args.getlist("years")}
+
+    try:
+        params = MonthlyDividendComparisonParams(**data)
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
 
     available_years_query = (
         db.session.query(MonthlyDividends.year)
@@ -110,43 +119,29 @@ def get_monthly_dividends_comparison():
     if not available_years:
         return jsonify({"available_years": [], "selected_years": [], "data": []}), 200
 
-    if years_param:
-        try:
-            selected_years = sorted(
-                {
-                    int(year_str)
-                    for year_str in years_param.split(",")
-                    if year_str.strip()
-                }
-            )
-        except ValueError:
-            return jsonify(
-                {"error": "years must be a comma-separated list of integers"}
-            ), 400
-
-        if len(selected_years) > MAX_COMPARISON_YEARS:
-            return (
-                jsonify(
-                    {
-                        "error": f"A maximum of {MAX_COMPARISON_YEARS} years can be requested"
-                    }
-                ),
-                400,
-            )
-
-        invalid_years = [year for year in selected_years if year not in available_years]
-        if invalid_years:
-            return (
-                jsonify(
-                    {
-                        "error": "One or more requested years are unavailable",
-                        "invalid_years": invalid_years,
-                    }
-                ),
-                400,
-            )
-    else:
+    selected_years = sorted(params.years)
+    if len(params.years) == 0:
         selected_years = available_years
+
+    if len(selected_years) > MAX_COMPARISON_YEARS:
+        return (
+            jsonify(
+                {"error": f"A maximum of {MAX_COMPARISON_YEARS} years can be requested"}
+            ),
+            400,
+        )
+
+    invalid_years = [year for year in selected_years if year not in available_years]
+    if invalid_years:
+        return (
+            jsonify(
+                {
+                    "error": "One or more requested years are unavailable",
+                    "invalid_years": invalid_years,
+                }
+            ),
+            400,
+        )
 
     monthly_rows = (
         db.session.query(MonthlyDividends)
@@ -236,27 +231,21 @@ def get_pie_chart_data():
 @dividends_bp.route("/list-company-totals", methods=["GET"])
 def list_company_totals():
     """List total dividends for all companies with pagination"""
-    page = flask_request.args.get("page", default=1, type=int)
-    page_size = flask_request.args.get("page_size", default=10, type=int)
-    search = flask_request.args.get("search", default=None, type=str)
-    filters = flask_request.args.get("filters", default=None, type=str)
-    sort_by = flask_request.args.get("sort_by", default="total_payments", type=str)
-    sort_direction = flask_request.args.get(
-        "sort_direction", default=SortDirection.DESCENDING, type=SortDirection
-    )
+    params_data = flask_request.args.to_dict()
+    params_data["filters"] = flask_request.args.getlist("filters") or None
+    try:
+        params = ListCompanyTotalsParams(**params_data)
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
 
     allowed_sort_fields = ["name", "total_payments", "last_payment_date"]
 
-    if not _vaidate_sort_by(sort_by, allowed_sort_fields):
+    if not _vaidate_sort_by(params.sort_by, allowed_sort_fields):
         return jsonify(
             {"error": f"sort_by parameter must be one of: {allowed_sort_fields}"}
         ), 400
 
-    # Parse query string parameters to list
-    if filters:
-        filters = filters.split(",")
-
-    offset = (page - 1) * page_size
+    offset = (params.page - 1) * params.page_size
 
     query = (
         db.session.query(
@@ -273,32 +262,35 @@ def list_company_totals():
     total_count = query.count()
 
     # Special handling for join and labelled column
-    if sort_by == "last_payment_date":
+    if params.sort_by == "last_payment_date":
         sort_column = func.max(Dividend.payment_date)
-        if sort_direction == SortDirection.DESCENDING:
+        if params.sort_direction == SortDirection.DESCENDING:
             query = query.order_by(sort_column.desc())
         else:
             query = query.order_by(sort_column.asc())
     else:
-        query = _sort_query(query, Company, sort_by, sort_direction)
+        query = _sort_query(query, Company, params.sort_by, params.sort_direction)
 
-    if filters:
-        query = query.filter(Company.ticker.in_(filters))
+    if params.filters:
+        query = query.filter(Company.ticker.in_(params.filters))
         total_count = query.count()
 
-    if search:
+    if params.search:
         query = query.filter(
-            or_(Company.ticker.ilike(f"%{search}%"), Company.name.ilike(f"%{search}%"))
+            or_(
+                Company.ticker.ilike(f"%{params.search}%"),
+                Company.name.ilike(f"%{params.search}%"),
+            )
         )
         total_count = query.count()
 
-    query = query.offset(offset).limit(page_size)
+    query = query.offset(offset).limit(params.page_size)
     return (
         jsonify(
             {
                 "data": [d._asdict() for d in query],
-                "page": page,
-                "page_size": page_size,
+                "page": params.page,
+                "page_size": params.page_size,
                 "total_count": total_count,
             }
         ),
@@ -309,46 +301,45 @@ def list_company_totals():
 @dividends_bp.route("/list-company-dividends", methods=["GET"])
 def list_company_dividends():
     """List dividends for a specific company."""
-    page = flask_request.args.get("page", default=1, type=int)
-    page_size = flask_request.args.get("page_size", default=10, type=int)
-    ticker = flask_request.args.get("ticker", default=None, type=str)
-    sort_by = flask_request.args.get("sort_by", default="payment_date", type=str)
-    sort_direction = flask_request.args.get(
-        "sort_direction", default=SortDirection.ASCENDING, type=SortDirection
-    )
+
+    try:
+        params = ListCompanyDividendsParams(**flask_request.args.to_dict())
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
+
     allowed_sort_fields = ["payment_date", "ticker", "total_payment"]
 
-    if not ticker:
+    if not params.ticker:
         return (
             jsonify({"error": "Missing required query string parameter: ticker"}),
             400,
         )
 
-    if not _vaidate_sort_by(sort_by, allowed_sort_fields):
+    if not _vaidate_sort_by(params.sort_by, allowed_sort_fields):
         return jsonify(
             {"error": f"sort_by parameter must be one of: {allowed_sort_fields}"}
         ), 400
 
-    offset = (page - 1) * page_size
+    offset = (params.page - 1) * params.page_size
 
     query = (
         db.session.query(Dividend)
         .join(Company)
         .where(Dividend.company_id == Company.id)
-        .filter(Company.ticker == ticker)
+        .filter(Company.ticker == params.ticker)
         .order_by(Dividend.payment_date.desc())
     )
     total_count = query.count()
 
-    query = _sort_query(query, Dividend, sort_by, sort_direction)
+    query = _sort_query(query, Dividend, params.sort_by, params.sort_direction)
 
-    query = query.offset(offset).limit(page_size)
+    query = query.offset(offset).limit(params.page_size)
     return (
         jsonify(
             {
                 "data": [d.asdict() for d in query.all()],
-                "page": page,
-                "page_size": page_size,
+                "page": params.page,
+                "page_size": params.page_size,
                 "total_count": total_count,
             }
         ),
@@ -362,12 +353,15 @@ def get_available_tickers():
     Fetch available tickers to sort on, use the Dividends table
     to be in line with the `list_company_totals` endpoint
     """
-    sort_direction = flask_request.args.get(
-        "sort_direction", default=SortDirection.ASCENDING, type=SortDirection
-    )
+
+    try:
+        params = ListAvailableTickersParams(**flask_request.args.to_dict())
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
+
     query = db.session.query(Company.ticker, Company.name).distinct(Company.id)
 
-    query = _sort_query(query, Company, "ticker", sort_direction)
+    query = _sort_query(query, Company, "ticker", params.sort_direction)
 
     if not query:
         return (
@@ -385,25 +379,22 @@ def get_available_tickers():
 @dividends_bp.route("/dividend-projection", methods=["GET"])
 def get_dividend_projection():
     """
-    Project potential portfolio value and dividends for X years
+    Project potential portfolio value and dividends for  years
     """
 
-    # Need this function since URL Params will always evaluate to true
-    # i.e. ...?reinvest=false... will always evaluate to true
-    def is_true(value):
-        return value.lower() == "true"
+    try:
+        params = DividendProjectionParams(**flask_request.args.to_dict())
+    except ValidationError as e:
+        return jsonify({"error": "Bad Request", "details": e.errors()}), 400
 
-    annual_contributions = int(flask_request.args.get("annual_contributions"))
-    reinvest = bool(flask_request.args.get("reinvest", True, type=is_true))
-    years = int(flask_request.args.get("years", 10))
-
+    annual_contributions = params.annual_contributions
     if not annual_contributions:
         annual_contributions = calculate_average_annual_contributions()
 
     return {
         "data": project_portfolio_dividends(
             annual_contribution=float(annual_contributions),
-            years=years,
-            reinvest=reinvest,
+            years=params.years,
+            reinvest=params.reinvest,
         ).as_dict()
     }

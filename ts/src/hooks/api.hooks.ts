@@ -136,7 +136,16 @@ export function useListCompanyTotals(
   sortBy?: string,
   sortDirection?: string,
 ) {
-  const url = `${BASE_URL}/list-company-totals?page=${page}&page_size=${pageSize}&search=${search}&filters=${filters}${sortBy ? `&sort_by=${sortBy}` : ''}${sortDirection ? `&sort_direction=${sortDirection}` : ''}`;
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+    search,
+  });
+  filters.forEach((value) => params.append("filters", value));
+  if (sortBy) params.set("sort_by", sortBy);
+  if (sortDirection) params.set("sort_direction", sortDirection);
+
+  const url = `${BASE_URL}/list-company-totals?${params.toString()}`;
   return useFetch<ListDividendsResponse>(url, [page, pageSize, search, filters, sortBy, sortDirection]);
 }
 

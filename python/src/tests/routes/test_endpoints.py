@@ -324,11 +324,15 @@ class TestListCompanyTotals:
 
     def test_filters_by_ticker(self, client, mock_db):
         rows = [self._make_row(ticker="AAPL")]
-        self._setup_query_chain(mock_db, rows)
+        chain = self._setup_query_chain(mock_db, rows)
 
-        response = client.get("/list-company-totals?filters=AAPL")
+        response = client.get(
+            "/list-company-totals?filters=AAPL&filters=ADM"
+        )
 
         assert response.status_code == 200
+        filter_expression = chain.order_by.return_value.filter.call_args.args[0]
+        assert filter_expression.right.value == ["AAPL", "ADM"]
 
     def test_applies_search(self, client, mock_db):
         rows = [self._make_row(name="Apple Inc.")]
@@ -464,7 +468,7 @@ class TestGetMonthlyDividendsComparison:
 
         mock_db.query.side_effect = [available_query, monthly_query]
 
-        response = client.get("/monthly-dividends-comparison?years=2023,2024")
+        response = client.get("/monthly-dividends-comparison?years=2023&years=2024")
 
         assert response.status_code == 200
         body = response.get_json()
@@ -487,7 +491,9 @@ class TestGetMonthlyDividendsComparison:
         ]
         mock_db.query.return_value = available_query
 
-        response = client.get("/monthly-dividends-comparison?years=2024,not-a-year")
+        response = client.get(
+            "/monthly-dividends-comparison?years=2024&years=not-a-year"
+        )
 
         assert response.status_code == 400
         assert "error" in response.get_json()
