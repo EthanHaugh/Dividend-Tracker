@@ -49,7 +49,7 @@ run-fe: ## Start frontend dev server
 
 run-all: ## Start web server, frontend, worker, and scheduler together
 	@trap 'kill 0' INT TERM EXIT; \
-	(cd $(PY_DIR) && FLASK_ENV=DEVELOPMENT $(PY_VENV_BIN)/waitress-serve --host 127.0.0.1 --port 8080 run:app) & \
+	(cd $(PY_DIR) && FLASK_ENV=DEVELOPMENT $(PY_VENV_BIN)/waitress-serve --host 127.0.0.1 --port 5000 run:app) & \
 	(cd $(TS_DIR) && npm run start) & \
 	(cd $(PY_DIR) && $(PY_VENV_BIN)/celery -A celery_service.celery_run.celery worker --loglevel=info) & \
 	(cd $(PY_DIR) && $(PY_VENV_BIN)/celery -A celery_service.celery_run.celery beat --loglevel=info) & \
