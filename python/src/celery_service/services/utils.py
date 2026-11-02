@@ -23,7 +23,8 @@ def process_dividend_csv(file_path: str, report_id: int, year: int) -> None:
             )
 
             payment_timestamp = row.get("Time (UTC)") or row.get("Time")
-            if not payment_timestamp:
+            if not payment_timestamp or payment_timestamp == "None":
+                # Without a timestamp we cant determine the date to create a db record
                 continue
 
             payment_datetime = datetime.fromisoformat(payment_timestamp)

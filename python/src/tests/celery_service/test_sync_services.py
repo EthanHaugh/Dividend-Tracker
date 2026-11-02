@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import ClassVar
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -30,21 +31,20 @@ def mock_requests():
 
 
 class TestSyncOpenPositions:
-    def __init__(self):
-        self.API_PAYLOAD = [
-            {
-                "instrument": {"ticker": "AAPL", "name": "Apple Inc."},
-                "quantity": 10.0,
-                "averagePricePaid": 150.00,
-                "createdAt": "2023-01-15T00:00:00",
-            },
-            {
-                "instrument": {"ticker": "MSFT", "name": "Microsoft Corp."},
-                "quantity": 5.0,
-                "averagePricePaid": 280.00,
-                "createdAt": "2023-03-10T00:00:00",
-            },
-        ]
+    API_PAYLOAD: ClassVar[list[dict]] = [
+        {
+            "instrument": {"ticker": "AAPL", "name": "Apple Inc."},
+            "quantity": 10.0,
+            "averagePricePaid": 150.00,
+            "createdAt": "2023-01-15T00:00:00",
+        },
+        {
+            "instrument": {"ticker": "MSFT", "name": "Microsoft Corp."},
+            "quantity": 5.0,
+            "averagePricePaid": 280.00,
+            "createdAt": "2023-03-10T00:00:00",
+        },
+    ]
 
     def test_updates_existing_company(self, mock_db_session, mock_requests):
         mock_requests.get.return_value = MagicMock(
@@ -85,23 +85,22 @@ class TestSyncOpenPositions:
 
 
 class TestSyncAccountSummary:
-    def __init__(self):
-        self.SUMMARY_PAYLOAD = {
-            "currency": "USD",
-            "id": 1,
-            "totalValue": 1000.0,
-            "cash": {
-                "availableToTrade": 100,
-                "inPies": 1000,
-                "reservedForOrders": 0,
-            },
-            "investments": {
-                "totalCost": 10000.00,
-                "currentValue": 12000.00,
-                "realizedProfitLoss": 500.00,
-                "unrealizedProfitLoss": 10000.0,
-            },
-        }
+    SUMMARY_PAYLOAD: ClassVar[dict] = {
+        "currency": "USD",
+        "id": 1,
+        "totalValue": 1000.0,
+        "cash": {
+            "availableToTrade": 100,
+            "inPies": 1000,
+            "reservedForOrders": 0,
+        },
+        "investments": {
+            "totalCost": 10000.00,
+            "currentValue": 12000.00,
+            "realizedProfitLoss": 500.00,
+            "unrealizedProfitLoss": 10000.0,
+        },
+    }
 
     def _setup_query_chain(
         self, mock_db_session, deposits_total, yearly_total, metadata
@@ -406,26 +405,28 @@ class TestSyncCompanyDividends:
 
 
 class TestSyncAccountTransactions:
-    def __init__(self):
-        ITEM_1 = {
-            "reference": "ref-001",
-            "dateTime": "2024-01-15T10:00:00Z",
-            "amount": 500.0,
-            "type": TransactionType.DEPOSIT,
-        }
-        ITEM_2 = {
-            "reference": "ref-002",
-            "dateTime": "2024-02-20T10:00:00Z",
-            "amount": 250.0,
-            "type": TransactionType.WITHDRAW,
-        }
+    ITEM_1: ClassVar[dict] = {
+        "reference": "ref-001",
+        "dateTime": "2024-01-15T10:00:00Z",
+        "amount": 500.0,
+        "type": TransactionType.DEPOSIT,
+    }
+    ITEM_2: ClassVar[dict] = {
+        "reference": "ref-002",
+        "dateTime": "2024-02-20T10:00:00Z",
+        "amount": 250.0,
+        "type": TransactionType.WITHDRAW,
+    }
 
-        self.SINGLE_PAGE_PAYLOAD = {"items": [ITEM_1, ITEM_2], "nextPagePath": None}
-        self.PAGE_1_PAYLOAD = {
-            "items": [ITEM_1],
-            "nextPagePath": "limit=50&cursor=abc123",
-        }
-        self.PAGE_2_PAYLOAD = {"items": [ITEM_2], "nextPagePath": None}
+    SINGLE_PAGE_PAYLOAD: ClassVar[dict] = {
+        "items": [ITEM_1, ITEM_2],
+        "nextPagePath": None,
+    }
+    PAGE_1_PAYLOAD: ClassVar[dict] = {
+        "items": [ITEM_1],
+        "nextPagePath": "limit=50&cursor=abc123",
+    }
+    PAGE_2_PAYLOAD: ClassVar[dict] = {"items": [ITEM_2], "nextPagePath": None}
 
     def test_adds_all_transactions_single_page(self, mock_db_session, mock_requests):
         mock_requests.get.return_value = MagicMock(

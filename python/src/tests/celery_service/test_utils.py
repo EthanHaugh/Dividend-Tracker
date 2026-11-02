@@ -19,7 +19,7 @@ def make_csv(*rows: dict) -> str:
     lines = [CSV_HEADERS]
     for row in rows:
         lines.append(
-            f"Dividend,{row.get('Time', '2024-03-01T00:00:00')},{row.get('Name', 'Apple Inc.')},"
+            f"Dividend,{row.get('Time') if row.get('Time') else None},{row.get('Name', 'Apple Inc.')},"
             f"{row.get('No. of shares', '10')},{row.get('Price / share', '1.00')},"
             f"{row.get('Currency (Price / share)', 'USD')},1.0,"
             f"{row.get('Total', '10.00')},0,USD,\n"
@@ -65,7 +65,9 @@ class TestProcessDividendCsv:
 
         mock_db_session.query.return_value = query_mock
 
-        csv_content = make_csv({"Name": "Apple Inc.", "Total": "15.00"})
+        csv_content = make_csv(
+            {"Name": "Apple Inc.", "Total": "15.00", "Time": "2024-06-15T12:30:00"}
+        )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
@@ -83,7 +85,9 @@ class TestProcessDividendCsv:
 
         mock_db_session.query.return_value = query_mock
 
-        csv_content = make_csv({"Name": "Unknown Corp", "Total": "5.00"})
+        csv_content = make_csv(
+            {"Name": "Unknown Corp", "Total": "5.00", "Time": "2024-06-15T12:30:00"}
+        )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
@@ -102,8 +106,8 @@ class TestProcessDividendCsv:
         mock_db_session.query.return_value = query_mock
 
         csv_content = make_csv(
-            {"Name": "Apple Inc.", "Total": "5.00"},
-            {"Name": "Apple Inc.", "Total": "7.00"},
+            {"Name": "Apple Inc.", "Total": "5.00", "Time": "2024-06-15T12:30:00"},
+            {"Name": "Apple Inc.", "Total": "7.00", "Time": "2024-06-15T12:30:00"},
         )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
@@ -121,8 +125,8 @@ class TestProcessDividendCsv:
         mock_db_session.query.return_value = query_mock
 
         csv_content = make_csv(
-            {"Name": "Ghost Corp", "Total": "3.00"},
-            {"Name": "Ghost Corp", "Total": "4.00"},
+            {"Name": "Ghost Corp", "Total": "3.00", "Time": "2024-06-15T12:30:00"},
+            {"Name": "Ghost Corp", "Total": "4.00", "Time": "2024-06-15T12:30:00"},
         )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
@@ -145,7 +149,7 @@ class TestProcessDividendCsv:
 
         mock_db_session.query.side_effect = query_side_effect
 
-        csv_content = make_csv({"Total": "150.00"})
+        csv_content = make_csv({"Total": "150.00", "Time": "2024-06-15T12:30:00"})
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
@@ -163,7 +167,7 @@ class TestProcessDividendCsv:
 
         mock_db_session.query.return_value = query_mock
 
-        csv_content = make_csv({"Total": "100.00"})
+        csv_content = make_csv({"Total": "100.00", "Time": "2024-06-15T12:30:00"})
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
@@ -189,7 +193,7 @@ class TestProcessDividendCsv:
 
         mock_db_session.query.return_value = query_mock
 
-        csv_content = make_csv({"Total": "100.00"})
+        csv_content = make_csv({"Total": "100.00", "Time": "2024-06-15T12:30:00"})
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
@@ -208,9 +212,9 @@ class TestProcessDividendCsv:
         mock_db_session.query.return_value = query_mock
 
         csv_content = make_csv(
-            {"Total": "10.00"},
-            {"Total": "20.00"},
-            {"Total": "30.00"},
+            {"Total": "10.00", "Time": "2024-06-15T12:30:00"},
+            {"Total": "20.00", "Time": "2024-06-15T12:30:00"},
+            {"Total": "30.00", "Time": "2024-06-15T12:30:00"},
         )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
@@ -228,8 +232,8 @@ class TestProcessDividendCsv:
         mock_db_session.query.return_value = query_mock
 
         csv_content = make_csv(
-            {"Total": "40.00"},
-            {"Total": "60.00"},
+            {"Total": "40.00", "Time": "2024-06-15T12:30:00"},
+            {"Total": "60.00", "Time": "2024-06-15T12:30:00"},
         )
 
         with patch("builtins.open", return_value=io.StringIO(csv_content)):
@@ -361,3 +365,33 @@ class TestProcessDividendCsv:
             process_dividend_csv("dividends.csv", report_id=1, year=2024)
 
         assert existing_monthly.total_dividends == 25.0
+
+    def test_row_is_skipped_with_missing_timestamp(self, mock_db_session):
+        placeholder = MagicMock(id=0, total_payments=Decimal(0))
+
+        query_mock = MagicMock()
+        query_mock.filter.return_value.one.return_value = placeholder
+        query_mock.filter.return_value.one_or_none.return_value = None
+
+        mock_db_session.query.return_value = query_mock
+
+        csv_content = make_csv(
+            {"Total": "10.00"},  # No timestamp
+            {"Time": "2024-01-28T00:00:00", "Total": "5.00"},
+            {"Time": "2024-02-10T00:00:00", "Total": "7.00"},
+        )
+
+        with patch("builtins.open", return_value=io.StringIO(csv_content)):
+            process_dividend_csv("dividends.csv", report_id=1, year=2024)
+
+        monthly_rows = [
+            call[0][0]
+            for call in mock_db_session.add.call_args_list
+            if isinstance(call[0][0], MonthlyDividends)
+        ]
+
+        assert len(monthly_rows) == 2
+        jan_row = next(row for row in monthly_rows if row.month == 1)
+        feb_row = next(row for row in monthly_rows if row.month == 2)
+        assert jan_row.total_dividends == 5.0
+        assert feb_row.total_dividends == 7.0

@@ -1,7 +1,7 @@
 import os
 
 from celery.schedules import crontab
-from sqlalchemy import NullPool, QueuePool
+from sqlalchemy import NullPool
 
 
 class Config:
@@ -61,33 +61,33 @@ class TestingConfig(Config):
         self.SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}
 
 
-class ProductionConfig(Config):
-    def __init__(self) -> None:
-        super().__init__()
-        self.DEBUG = False
-        self.TESTING = False
+# class ProductionConfig(Config):
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.DEBUG = False
+#         self.TESTING = False
 
-        self.SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "").replace(
-            "postgresql://", "postgresql+psycopg://", 1
-        )
+#         self.SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "").replace(
+#             "postgresql://", "postgresql+psycopg://", 1
+#         )
 
-        self.SQLALCHEMY_ENGINE_OPTIONS = {
-            "poolclass": QueuePool,
-            "pool_size": 5,
-            "max_overflow": 4,
-            "pool_timeout": 10,
-            "pool_pre_ping": True,
-            "pool_recycle": 1800,
-        }
+#         self.SQLALCHEMY_ENGINE_OPTIONS = {
+#             "poolclass": QueuePool,
+#             "pool_size": 5,
+#             "max_overflow": 4,
+#             "pool_timeout": 10,
+#             "pool_pre_ping": True,
+#             "pool_recycle": 1800,
+#         }
 
-        self.PREFERRED_URL_SCHEME = "https"
-        self.SESSION_COOKIE_SECURE = True
-        self.SESSION_COOKIE_HTTPONLY = True
-        self.SESSION_COOKIE_SAMESITE = "Lax"
+#         self.PREFERRED_URL_SCHEME = "https"
+#         self.SESSION_COOKIE_SECURE = True
+#         self.SESSION_COOKIE_HTTPONLY = True
+#         self.SESSION_COOKIE_SAMESITE = "Lax"
 
 
 config = {
     "DEVELOPMENT": DevelopmentConfig,
     "TESTING": TestingConfig,
-    "PRODUCTION": ProductionConfig,
+    # "PRODUCTION": ProductionConfig,
 }
