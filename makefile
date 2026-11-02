@@ -63,7 +63,7 @@ test-py: ## Run Python tests
 	python -m pytest .
 
 test-py-cov: ## Run Python tests with coverage
-	python -m pytest ./python/src/tests --cov=python/src
+	python -m pytest ./python/src/tests --cov=python/src --cov-report=term-missing
 
 test-fe: ## Run TS tests
 	cd ./ts && npx vitest
