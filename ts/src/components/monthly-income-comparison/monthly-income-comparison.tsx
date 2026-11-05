@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Col, Empty, Row, Select, Tooltip, Typography } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { CircularProgress } from "@mui/material";
-import { LineChart } from "@mui/x-charts/LineChart";
+import { LineChart, LineSeries } from "@mui/x-charts/LineChart";
 
 import { useGetMonthlyDividendsComparison } from "../../hooks/api.hooks";
 import styles from "./monthly-income-comparison.module.css";
@@ -43,8 +43,8 @@ export function MonthlyIncomeComparisonChart() {
 
     const months = data?.data ?? [];
 
-    const series = useMemo(() => {
-        return selectedYears.map((year) => {
+    const series = useMemo((): LineSeries[] => {
+        return selectedYears.map((year): LineSeries => {
             let cumulativeTotal = 0;
             const points = months.map((monthPoint) => {
                 const monthlyValue = monthPoint.values[String(year)] ?? 0;
@@ -59,6 +59,7 @@ export function MonthlyIncomeComparisonChart() {
                 data: points,
                 label: `${year}`,
                 valueFormatter: (value: number | null) => `£${Number(value ?? 0).toFixed(2)}`,
+                highlightScope: { fade: "global", highlight: "series" }
             };
         });
     }, [metricMode, months, selectedYears]);
