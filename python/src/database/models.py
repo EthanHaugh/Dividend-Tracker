@@ -23,7 +23,11 @@ class BaseModel:
 
     def asdict(self):
         """Convert model to dictionary."""
-        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+        return {
+            col.name: (float(value) if isinstance(value, Decimal) else value)
+            for col in self.__table__.columns
+            if (value := getattr(self, col.name)) is not None
+        }
 
 
 class Company(Base, BaseModel):
