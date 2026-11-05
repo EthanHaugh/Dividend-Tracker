@@ -143,6 +143,14 @@ export function MonthlyIncomeComparisonChart() {
                             },
                         ]}
                         series={series}
+                        slotProps={{
+                            legend: {
+                                sx: {
+                                    fontSize: 14,
+                                    color: AXIS_COLOUR,
+                                },
+                            },
+                        }}
                         height={340}
                     />
                 </Row>

@@ -192,7 +192,14 @@ export function DividendProjectionsChart() {
                                 : []),
                         ]}
                         series={series}
-                        hideLegend
+                        slotProps={{
+                            legend: {
+                                sx: {
+                                    fontSize: 14,
+                                    color: AXIS_COLOUR,
+                                },
+                            },
+                        }}
                         height={300}
                     />
                 </Row>
