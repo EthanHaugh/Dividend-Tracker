@@ -9,7 +9,23 @@ The public demo runs as an AWS Lightsail container. It serves the compiled React
 - The Lightsail upload plugin: `brew install aws/tap/lightsailctl`
 - A configured AWS region, or `AWS_REGION` set for the deploy command
 
-## Deploy
+## Automated Deployment (GitHub Actions)
+
+A GitHub Actions workflow is located at `.github/workflows/deploy-lightsail.yml`. It triggers on pushes to the `development` and `main` branches, as well as manually via `workflow_dispatch`.
+
+### Required GitHub Repository Secrets
+
+Configure the following secrets in your GitHub repository (**Settings > Secrets and variables > Actions**):
+
+- `AWS_ACCESS_KEY_ID`: IAM user access key with Amazon Lightsail permissions.
+- `AWS_SECRET_ACCESS_KEY`: IAM user secret key.
+- `AWS_REGION` *(optional)*: AWS region (defaults to `us-east-1` if not specified).
+
+### Optional Repository Variables
+
+- `SERVICE_NAME` *(optional)*: Lightsail container service name (defaults to `dividend-tracker-demo`).
+
+## Manual Local Deploy
 
 From the repository root, run:
 

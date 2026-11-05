@@ -12,7 +12,7 @@ if [ -z "${DOCKER_HOST:-}" ] && [ -S "$HOME/.docker/run/docker.sock" ]; then
 fi
 
 SERVICE_NAME="${SERVICE_NAME:-dividend-tracker-demo}"
-REGION="${AWS_REGION:-$(aws configure get region)}"
+REGION="${AWS_REGION:-$(aws configure get region 2>/dev/null || true)}"
 REGION="${REGION:-us-east-1}"
 IMAGE_NAME="${SERVICE_NAME}:latest"
 

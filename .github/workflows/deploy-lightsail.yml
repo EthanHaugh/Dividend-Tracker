@@ -1,0 +1,39 @@
+name: Deploy AWS Lightsail Demo
+
+on:
+  label:
+    types:
+      - created
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-lightsail-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy Demo to Lightsail
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Install lightsailctl Plugin
+        run: |
+          sudo curl -fsSL "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" -o "/usr/local/bin/lightsailctl"
+          sudo chmod +x /usr/local/bin/lightsailctl
+
+      - name: Build & Deploy Container
+        env:
+          SERVICE_NAME: ${{ vars.SERVICE_NAME || 'dividend-tracker-demo' }}
+          AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+        run: |
+          ./scripts/deploy-aws-lightsail-demo.sh
