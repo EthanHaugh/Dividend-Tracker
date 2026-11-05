@@ -9,6 +9,7 @@ interface InfoCardProps {
   value?: string | number;
   footerTitle?: string;
   footerValue?: string | number;
+  footerValueType?: "success" | "danger" | "secondary";
   footerIcon?: ReactElement;
   suffix?: ReactElement;
 }
@@ -19,6 +20,7 @@ export function InfoCard({
   loading,
   footerTitle,
   footerValue,
+  footerValueType = "secondary",
   footerIcon,
   suffix,
 }: InfoCardProps) {
@@ -34,8 +36,16 @@ export function InfoCard({
             />
             <Typography.Text type="secondary" className={styles.footer}>
               {footerTitle && <div className={styles.footerItem}>{footerTitle}:</div>}
-              {footerValue && <div className={styles.footerItem}>{footerValue}</div>}
-              {footerIcon && <div className={styles.footerItem}>{footerIcon}</div>}
+              {footerValue && (
+                <div className={styles.footerItem}>
+                  <Typography.Text type={footerValueType}>{footerValue}</Typography.Text>
+                </div>
+              )}
+              {footerIcon && (
+                <div className={styles.footerItem}>
+                  <Typography.Text type={footerValueType}>{footerIcon}</Typography.Text>
+                </div>
+              )}
             </Typography.Text>
           </Col>
           <Col span={4}>

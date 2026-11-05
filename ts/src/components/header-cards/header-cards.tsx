@@ -22,12 +22,14 @@ export function HeaderCards() {
     useGetPreviousYearDividends();
   const { data: accountCash, isLoading: accountCashLoading } =
     useGetAccountCash();
+  const yoyIncrease = previousYearData?.yoy_increase;
+  const yoyIncreaseType = yoyIncrease! > 0 ? "success" : "danger";
 
   return (
     <Row justify={"space-between"}>
       <Col span={5}>
         <InfoCard
-          title="Total Dividends"
+          title="All Time Dividends"
           value={`£ ${totalDividends?.total_dividends.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -47,11 +49,12 @@ export function HeaderCards() {
             maximumFractionDigits: 2,
           })}`}
           footerTitle="YoY Increase"
-          footerValue={`${previousYearData?.yoy_increase.toLocaleString(undefined, {
+          footerValue={`${yoyIncrease?.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          })}% `}
-          footerIcon={previousYearData?.yoy_increase! > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+          }) ?? "0.00"}%`}
+          footerValueType={yoyIncreaseType}
+          footerIcon={yoyIncrease != null && yoyIncrease > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
           loading={isLoadingPreviousYear}
           suffix={<CalendarOutlined />}
         />
