@@ -1,6 +1,6 @@
 # AWS Demo Deployment
 
-The public demo runs as an AWS Lightsail container. It serves the compiled React dashboard and Flask API from the same HTTPS URL, and starts with deterministic synthetic SQLite data. It does not use Trading212 credentials, Redis, Celery, or an external database.
+The public demo runs as an AWS Lightsail container. It serves the compiled React dashboard and Flask API from the same HTTPS URL, and starts with deterministic synthetic SQLite data. At startup, it creates the schema from the SQLAlchemy models and seeds the synthetic portfolio. It does not use Trading212 credentials, Redis, Celery, or an external database.
 
 ## Prerequisites
 

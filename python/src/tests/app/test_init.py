@@ -98,11 +98,15 @@ def test_seed_demo_cli_command_seeds_demo_data(monkeypatch) -> None:
     monkeypatch.setenv("DEMO_MODE", "true")
     app = create_app("TESTING")
 
-    with patch("database.demo_seed.seed_demo_data") as seed_demo_data:
+    with (
+        patch("app.db.create_all", wraps=app_module.db.create_all) as create_all,
+        patch("database.demo_seed.seed_demo_data") as seed_demo_data,
+    ):
         result = app.test_cli_runner().invoke(args=["seed-demo"])
 
     assert result.exit_code == 0
     assert result.output == "Demo data seeded.\n"
+    create_all.assert_called_once_with()
     seed_demo_data.assert_called_once_with()
 
 

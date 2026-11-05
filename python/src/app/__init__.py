@@ -104,6 +104,7 @@ def create_app(env: str | None = None) -> Flask:
 
         from database.demo_seed import seed_demo_data
 
+        db.create_all()
         seed_demo_data()
         print("Demo data seeded.")
 
