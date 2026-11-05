@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { MonthlyIncomeComparisonChart } from "../../../components/monthly-income-comparison/monthly-income-comparison";
 import { useGetMonthlyDividendsComparison } from "../../../hooks/api.hooks";
+import { mockUseGetMonthlyDividendsComparison } from "./mocks";
 
 const lineChartSpy = vi.fn();
 
@@ -69,6 +70,79 @@ describe("MonthlyIncomeComparisonChart", () => {
         expect(lastCall.series.map((series) => series.label)).toEqual(["2023", "2024"]);
     });
 
+    test("keeps still-available years when the available year list changes", async () => {
+        const { rerender } = render(<MonthlyIncomeComparisonChart />);
+
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue({
+            data: {
+                ...mockComparisonData,
+                available_years: [2024, 2025],
+                selected_years: [2024, 2025],
+            },
+            isLoading: false,
+            error: null,
+            statusCode: undefined,
+        });
+        rerender(<MonthlyIncomeComparisonChart />);
+
+        await waitFor(() => {
+            const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+                series: Array<{ label: string }>;
+            };
+            expect(lastCall.series.map((series) => series.label)).toEqual(["2024"]);
+        });
+    });
+
+    test("selects available years when none of the previously selected years remain", async () => {
+        const { rerender } = render(<MonthlyIncomeComparisonChart />);
+
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue({
+            data: {
+                ...mockComparisonData,
+                available_years: [2025, 2026],
+                selected_years: [2025, 2026],
+            },
+            isLoading: false,
+            error: null,
+            statusCode: undefined,
+        });
+        rerender(<MonthlyIncomeComparisonChart />);
+
+        await waitFor(() => {
+            const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+                series: Array<{ label: string }>;
+            };
+            expect(lastCall.series.map((series) => series.label)).toEqual(["2025", "2026"]);
+        });
+    });
+
+    test("formats chart values including missing values as currency", async () => {
+        render(<MonthlyIncomeComparisonChart />);
+
+        await waitFor(() => {
+            expect(screen.getByTestId("line-chart")).toBeDefined();
+        });
+
+        const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+            series: Array<{ valueFormatter: (value: number | null) => string }>;
+        };
+        expect(lastCall.series[0].valueFormatter(12.345)).toBe("£12.35");
+        expect(lastCall.series[0].valueFormatter(null)).toBe("£0.00");
+    });
+
+    test("shows a spinner while monthly comparison data is loading", () => {
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue({
+            data: null,
+            isLoading: true,
+            error: null,
+            statusCode: undefined,
+        });
+
+        render(<MonthlyIncomeComparisonChart />);
+
+        expect(screen.getByRole("progressbar")).toBeDefined();
+    });
+
     test("year toggle hides selected year series", async () => {
         render(<MonthlyIncomeComparisonChart />);
 
@@ -88,8 +162,9 @@ describe("MonthlyIncomeComparisonChart", () => {
             const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
                 series: Array<{ label: string }>;
             };
-            expect(lastCall.series).toHaveLength(1);
-            expect(lastCall.series[0].label).toBe("2023");
+            expect(lastCall.series).toContainEqual(
+                expect.objectContaining({ label: "2023" })
+            )
         });
     });
 
@@ -115,6 +190,68 @@ describe("MonthlyIncomeComparisonChart", () => {
 
             const series2023 = lastCall.series.find((series) => series.label === "2023");
             expect(series2023?.data).toEqual([10, 15]);
+        });
+    });
+
+    test("monthly outliers are omitted while preserving month positions", async () => {
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue(mockUseGetMonthlyDividendsComparison);
+
+        render(<MonthlyIncomeComparisonChart />);
+
+        await waitFor(() => {
+            const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+                series: Array<{ data: (number | null)[]; label: string }>;
+            };
+            const series2024 = lastCall.series.find((series) => series.label === "2024");
+            expect(series2024?.data).toEqual([null, 7]);
+        });
+    });
+
+    test("cumulative total carries across a removed monthly outlier", async () => {
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue({
+            ...mockUseGetMonthlyDividendsComparison,
+            data: {
+                ...mockUseGetMonthlyDividendsComparison.data,
+                data: [
+                    { month: 1, month_label: "Jan", values: { "2022": 10, "2023": 11, "2024": 12 } },
+                    { month: 2, month_label: "Feb", values: { "2022": 5, "2023": 6, "2024": 1000 } },
+                ],
+            },
+        });
+
+        render(<MonthlyIncomeComparisonChart />);
+
+        const selects = screen.getAllByRole("combobox");
+        await userEvent.click(selects[1]);
+        const cumulativeOption = (await screen.findAllByTitle("Cumulative YTD")).find(
+            (option) => option.className.includes("ant-select-item-option"),
+        );
+        if (!cumulativeOption) {
+            throw new Error("Cumulative YTD option not found");
+        }
+        await userEvent.click(cumulativeOption);
+
+        await waitFor(() => {
+            const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+                series: Array<{ data: (number | null)[]; label: string }>;
+            };
+            const series2024 = lastCall.series.find((series) => series.label === "2024");
+            expect(series2024?.data).toEqual([12, 12]);
+        });
+    });
+
+    test("monthly outliers are shown when toggle is clicked", async () => {
+        mockedUseGetMonthlyDividendsComparison.mockReturnValue(mockUseGetMonthlyDividendsComparison);
+
+        render(<MonthlyIncomeComparisonChart />);
+        await userEvent.click(screen.getByRole("switch"));
+
+        await waitFor(() => {
+            const lastCall = lineChartSpy.mock.calls.at(-1)?.[0] as {
+                series: Array<{ data: (number | null)[]; label: string }>;
+            };
+            const series2024 = lastCall.series.find((series) => series.label === "2024");
+            expect(series2024?.data).toEqual([1000, 7]);
         });
     });
 
