@@ -1,4 +1,4 @@
-export const mockUseGetMonthlyDividendsComparison ={
+export const mockNormalUseGetMonthlyDividendsComparison = {
     data: {
         available_years: [2022, 2023, 2024],
         selected_years: [2022, 2023, 2024],
@@ -10,4 +10,19 @@ export const mockUseGetMonthlyDividendsComparison ={
     isLoading: false,
     error: null,
     statusCode: undefined
+}
+
+export const mockFutureUseGetMonthlyDividendsCompariosn = {
+    data: {
+        available_years: [2025, 2026],
+        selected_years: [2025, 2026],
+        data: [
+            { month: 5, month_label: "May", values: { "2025": 10, "2026": 20 } },
+            { month: 6, month_label: "Jun", values: { "2025": 30, "2026": 40 } },
+            { month: 7, month_label: "Jul", values: { "2025": 50, "2026": 60 } },
+        ],
+    },
+    isLoading: false,
+    error: null,
+    statusCode: undefined,
 }

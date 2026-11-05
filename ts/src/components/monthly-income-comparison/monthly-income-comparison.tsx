@@ -46,14 +46,26 @@ export function MonthlyIncomeComparisonChart() {
     const months = useMemo(() => data?.data ?? [], [data?.data]);
 
     const series = useMemo((): LineSeries[] => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
         const monthlyValues = selectedYears.map((year) =>
-            months.map((monthPoint) => monthPoint.values[String(year)] ?? 0),
+            months.map((monthPoint) =>
+                year > currentYear || (year === currentYear && monthPoint.month > currentMonth)
+                    ? null
+                    : monthPoint.values[String(year)] ?? 0,
+            ),
         );
         const filteredMonthlyValues = removeOutliers ? removeMonthlyOutliers(monthlyValues) : monthlyValues;
 
         return selectedYears.map((year, seriesIndex): LineSeries => {
             let cumulativeTotal = 0;
-            const points = filteredMonthlyValues[seriesIndex].map((monthlyValue) => {
+            const points = filteredMonthlyValues[seriesIndex].map((monthlyValue, monthIndex) => {
+                const month = months[monthIndex].month;
+                if (year > currentYear || (year === currentYear && month > currentMonth)) {
+                    return null;
+                }
+
                 if (monthlyValue === null) {
                     return metricMode === "monthly" ? null : Number(cumulativeTotal.toFixed(2));
                 }

@@ -13,7 +13,7 @@ function median(values: number[]): number {
 
 // Compare the same month across years and replace high outliers with null.
 export function removeMonthlyOutliers(
-    monthlySeries: readonly (readonly number[])[],
+    monthlySeries: readonly (readonly (number | null)[])[],
 ): (number | null)[][] {
     // Work on copies so the monthly data remains unchanged
     const filteredSeries: (number | null)[][] = monthlySeries.map((series) => [...series]);
@@ -32,7 +32,7 @@ export function removeMonthlyOutliers(
 
         for (let seriesIndex = 0; seriesIndex < monthlySeries.length; seriesIndex += 1) {
             const value = monthlySeries[seriesIndex][monthIndex];
-            if (!Number.isFinite(value)) {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
                 filteredSeries[seriesIndex][monthIndex] = null;
                 continue;
             }
